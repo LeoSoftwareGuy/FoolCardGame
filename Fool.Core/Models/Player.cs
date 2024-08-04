@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using Fool.Core.Exceptions;
+using Fool.Core.Models.Cards;
+using System.Text;
 
 namespace Fool.Core.Models
 {
@@ -28,6 +30,17 @@ namespace Fool.Core.Models
             Hand.Clear();
         }
 
+        public void PlayCard(Card card)
+        {
+            if (Hand.Contains(card))
+            {
+
+            }
+            else
+            {
+                throw new FoolExceptions("Cant play card which is not in my hand");
+            }
+        }
         public override string ToString()
         {
             var sb = new StringBuilder();

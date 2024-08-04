@@ -1,28 +1,60 @@
-﻿using System.Net.Http.Headers;
+﻿using Fool.Core.Exceptions;
+using Fool.Core.Models.Cards;
+using Fool.Core.Models.Table;
 
 namespace Fool.Core.Models
 {
     public class Game
     {
-        private Player? _firstToPlayPlayer;
+        private Player? _attackingPlayer;
+        private List<TableCard> _cardsOnTheTable;
         public Game(List<string> playerNames)
         {
             Deck = new Deck();
+            Deck.Shuffle();
             Players = CreatePlayersAndTheirHands(playerNames);
         }
-        public Deck Deck { get; private set; }
+        public Deck Deck { get;  private set; }
         public List<Player> Players { get; }
-        public Player? FirstToPlayPlayer
+
+        public IEnumerable<TableCard> CardsOnTheTable => _cardsOnTheTable;
+
+
+        public Player? AtatackingPlayer
         {
             get
             {
-                if (_firstToPlayPlayer == null)
+                if (_attackingPlayer == null)
                 {
                     return null;
                 }
                 else
                 {
-                    return _firstToPlayPlayer;
+                    return _attackingPlayer;
+                }
+            }
+        }
+
+        public Player? DefendingPlayer
+        {
+            get
+            {
+                if (_attackingPlayer == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    var index = Players.IndexOf(_attackingPlayer);
+                    if (index + 1 >= Players.Count)
+                    {
+                        return Players[0];
+                    }
+                    else
+                    {
+                        return Players[index + 1];
+                    }
+
                 }
             }
         }
@@ -30,11 +62,10 @@ namespace Fool.Core.Models
 
         public void PrepareForTheGame()
         {
-            _firstToPlayPlayer = DecideWhoPlaysFirst();
+            _attackingPlayer = DecideWhoPlaysFirst();
         }
         private List<Player> CreatePlayersAndTheirHands(List<string> playerNames)
         {
-            Deck.Shuffle();
             var players = new List<Player>();
             foreach (var playerName in playerNames)
             {
@@ -81,6 +112,33 @@ namespace Fool.Core.Models
                     }
                 }
             }
+        }
+
+
+        public void Attack(Player player, Card card)
+        {
+            if (AtatackingPlayer != player)
+            {
+                throw new FoolExceptions($"Player:{player.Name} cant attack as its player:{AtatackingPlayer?.Name} turn");
+            }
+            var tableCard = new TableCard(Deck.TrumpCard, card);
+            _cardsOnTheTable.Add(tableCard);
+        }
+
+        public void Defend(Player player, Card defendingCard, Card attackingCard)
+        {
+            if (DefendingPlayer != player)
+            {
+                throw new FoolExceptions($"Player:{player.Name} cant defend, as defending player is {DefendingPlayer?.Name}");
+            }
+
+            var card = _cardsOnTheTable.FirstOrDefault(x => x.AttackingCard == attackingCard);
+            if (card == null)
+            {
+                throw new FoolExceptions("Attacking card was not found on the table");
+            }
+
+            card.Defend(defendingCard);
         }
     }
 }

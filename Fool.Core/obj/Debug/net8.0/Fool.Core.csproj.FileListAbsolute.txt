@@ -9,3 +9,4 @@ C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\n
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\refint\Fool.Core.dll
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.pdb
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\ref\Fool.Core.dll
+C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.sourcelink.json

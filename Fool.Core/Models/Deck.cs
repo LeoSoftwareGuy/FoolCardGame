@@ -1,4 +1,5 @@
 ﻿using Fool.Core.Exceptions;
+using Fool.Core.Models.Cards;
 
 namespace Fool.Core.Models
 {
@@ -11,9 +12,9 @@ namespace Fool.Core.Models
             Cards = new List<Card>();
         }
 
-        public List<Card> Cards { get; set; }
+        public List<Card> Cards { get; private set; }
+        public Card TrumpCard { get;  private set; }
         public int CardsCount => Cards.Count;
-        public Card TrumpCard { get; set; }
 
         public void Shuffle()
         {
