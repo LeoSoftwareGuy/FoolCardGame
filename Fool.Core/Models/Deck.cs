@@ -6,10 +6,12 @@ namespace Fool.Core.Models
     public class Deck
     {
         private const int _intitialHandSize = 6;
+        private CardDeckGenerator _cardDeckGenerator;
 
-        public Deck()
+        public Deck(CardDeckGenerator cardDeckGenerator)
         {
             Cards = new List<Card>();
+            _cardDeckGenerator = cardDeckGenerator;
         }
 
         public List<Card> Cards { get; private set; }
@@ -48,10 +50,7 @@ namespace Fool.Core.Models
 
         private List<Card> FillInTheDeck()
         {
-            return CardsHolder.GetCards()
-                .Select(x => new { Order = Globals.Random.Next(), Card = x })
-                .OrderBy(x => x.Order)
-                .Select(x => x.Card).ToList();
+            return _cardDeckGenerator.GenerateDeck();
         }
     }
 }

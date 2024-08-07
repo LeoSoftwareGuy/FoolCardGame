@@ -10,11 +10,14 @@ namespace Fool.Core.Models
         private List<TableCard> _cardsOnTheTable;
         public Game(List<string> playerNames)
         {
-            Deck = new Deck();
+            Deck = new Deck(new CardDeckGenerator());
+            Players = new List<Player>();
+            _cardsOnTheTable = new List<TableCard>();
+
             Deck.Shuffle();
-            Players = CreatePlayersAndTheirHands(playerNames);
+            LetPlayersToTheTable(playerNames);
         }
-        public Deck Deck { get;  private set; }
+        public Deck Deck { get; set; }
         public List<Player> Players { get; }
 
         public IEnumerable<TableCard> CardsOnTheTable => _cardsOnTheTable;
@@ -62,20 +65,25 @@ namespace Fool.Core.Models
 
         public void PrepareForTheGame()
         {
+            DealHands();
             _attackingPlayer = DecideWhoPlaysFirst();
         }
-        private List<Player> CreatePlayersAndTheirHands(List<string> playerNames)
+
+        private void LetPlayersToTheTable(List<string> playerNames)
         {
-            var players = new List<Player>();
-            foreach (var playerName in playerNames)
+            foreach (var name in playerNames)
             {
-                var player = new Player(playerName);
-                player.TakeCards(Deck.DealHand());
-                players.Add(player);
+                Players.Add(new Player(name));
             }
-            return players;
         }
 
+        public void DealHands()
+        {
+            foreach (var player in Players)
+            {
+                player.TakeCards(Deck.DealHand());
+            }
+        }
 
         private Player DecideWhoPlaysFirst()
         {
@@ -94,16 +102,15 @@ namespace Fool.Core.Models
                     }
                 }
 
-                var lowestValueAmongPlayers = playerAndItsLowestTrumpCard.Min(x => x.Value.Rank.Value);
-                var playerWhoPlaysFirst = playerAndItsLowestTrumpCard.FirstOrDefault(x => x.Value.Rank.Value == lowestValueAmongPlayers).Key;
-
-                if (playerWhoPlaysFirst != null)
+                if (playerAndItsLowestTrumpCard != null && playerAndItsLowestTrumpCard.Count > 0)
                 {
+                    var lowestValueAmongPlayers = playerAndItsLowestTrumpCard.Min(x => x.Value.Rank.Value);
+                    var playerWhoPlaysFirst = playerAndItsLowestTrumpCard.FirstOrDefault(x => x.Value.Rank.Value == lowestValueAmongPlayers).Key;
                     return playerWhoPlaysFirst;
                 }
                 else
                 {
-                    Deck = new Deck();
+                    Deck = new Deck(new CardDeckGenerator());
                     Deck.Shuffle();
                     foreach (var player in Players)
                     {

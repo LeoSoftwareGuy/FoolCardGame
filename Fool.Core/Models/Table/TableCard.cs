@@ -17,6 +17,10 @@ namespace Fool.Core.Models.Table
 
         public void Defend(Card defenceCard)
         {
+            if (DefendingCard != null)
+            {
+                throw new FoolExceptions("The same Defending card cant be used twice");
+            }
             //Same suit
             if (AttackingCard.Suit.Name.Equals(defenceCard.Suit.Name))
             {

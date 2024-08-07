@@ -1,4 +1,5 @@
 ﻿using Fool.Core.Models;
+using Fool.Core.Models.Cards;
 
 namespace Fool.CardGame.Tests
 {
@@ -15,7 +16,7 @@ namespace Fool.CardGame.Tests
             const int cardNominals = 9;
             const int cardSuits = 4;
 
-            var deck = new Deck();
+            var deck = new Deck(new CardDeckGenerator());
             deck.Shuffle();
 
             Assert.That(deck?.CardsCount, Is.EqualTo(initialAmountOfCards));
@@ -26,7 +27,7 @@ namespace Fool.CardGame.Tests
         [Test]
         public void Deck_ShouldHaveTrumpCard()
         {
-            var deck = new Deck();
+            var deck = new Deck(new CardDeckGenerator());
             deck.Shuffle();
 
             Assert.IsNotNull(deck?.TrumpCard);
@@ -35,7 +36,7 @@ namespace Fool.CardGame.Tests
         [Test]
         public void Deck_ShouldPullCard()
         {
-            var deck = new Deck();
+            var deck = new Deck(new CardDeckGenerator());
             deck.Shuffle();
 
             var card = deck.PullCard();
@@ -47,7 +48,7 @@ namespace Fool.CardGame.Tests
         [Test]
         public void Deck_ShouldDealHand()
         {
-            var deck = new Deck();
+            var deck = new Deck(new CardDeckGenerator());
             deck.Shuffle();
 
             var hand = deck.DealHand();
@@ -62,6 +63,7 @@ namespace Fool.CardGame.Tests
         {
             var players = new List<string> { "Leo", "Vins", "Alan" };
             var game = new Game(players);
+            game.PrepareForTheGame();
             Assert.That(game?.Deck.CardsCount, Is.EqualTo(18));
             Assert.That(game?.Players.Count, Is.EqualTo(3));
             Assert.That(game?.Players[0].Hand.Count, Is.EqualTo(6));

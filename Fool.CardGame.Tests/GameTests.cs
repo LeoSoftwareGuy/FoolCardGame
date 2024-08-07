@@ -84,9 +84,9 @@ namespace Fool.CardGame.Tests
             var trumpCard = CardsHolder.GetCards()[8];
 
             var tableCard = new TableCard(trumpCard, nineOfClubs);
-          
 
-            var exeption = Assert.Throws<FoolExceptions>(()=> tableCard.Defend(tenOfClubs));
+
+            var exeption = Assert.Throws<FoolExceptions>(() => tableCard.Defend(tenOfClubs));
             Assert.That(exeption?.Message, Is.EqualTo("Defending Cards Rank is smaller then Attacking, same Suits"));
         }
 
@@ -101,6 +101,41 @@ namespace Fool.CardGame.Tests
 
             var exeption = Assert.Throws<FoolExceptions>(() => tableCard.Defend(differentSuitCard));
             Assert.That(exeption?.Message, Is.EqualTo("Attacking Card is Trump, but Defending is not"));
+        }
+
+
+        [Test]
+        [TestCase(0, 1, 8, true, TestName = "Successful defence without Exceptions")]
+        [TestCase(2, 1, 8, false, TestName = "Defencing card is trump card but with lower value")]
+        [TestCase(0, 1, 9, true, TestName = "Successful defence without Exceptions")]
+        [TestCase(2, 1, 9, false, TestName = "Defencing card is trump card but with lower value")]
+        public void Game_SuccessfulDefence(int attackingCardIndex, int defencingCardIndex, int trumpCardIndex, bool isSucess)
+        {
+            var attackingCard = CardsHolder.GetCards()[attackingCardIndex];
+            var defendingCard = CardsHolder.GetCards()[defencingCardIndex];
+            var trumpCard = CardsHolder.GetCards()[trumpCardIndex];
+
+            var tableCard = new TableCard(trumpCard, attackingCard);
+            if (isSucess)
+            {
+                tableCard.Defend(defendingCard);
+            }
+            else
+            {
+                Assert.Throws<FoolExceptions>(() => tableCard.Defend(defendingCard));
+            }
+        }
+
+        [Test]
+        public void Game_PlayOneRound_SuccessfulDefence()
+        {
+            var game = new Game(new List<string> { "Leo", "Elmaz" });
+            game.Deck = new Deck(new TestDeckGenerator());
+            game.Deck.Shuffle();
+            game.PrepareForTheGame();
+            game.Attack(game.AtatackingPlayer, game.AtatackingPlayer.PlayCard(0));
+            game.Defend(game.DefendingPlayer, game.DefendingPlayer.PlayCard(0), game.CardsOnTheTable.First().AttackingCard);
+
         }
 
         private Card GetPlayersLowestTrumpCard(Player player, Card trumpCard)

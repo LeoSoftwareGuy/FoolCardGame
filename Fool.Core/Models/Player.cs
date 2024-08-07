@@ -6,6 +6,10 @@ namespace Fool.Core.Models
 {
     public class Player
     {
+        public Player()
+        {
+            
+        }
         public Player(string name)
         {
             Name = name;
@@ -30,16 +34,15 @@ namespace Fool.Core.Models
             Hand.Clear();
         }
 
-        public void PlayCard(Card card)
+        public Card PlayCard(int cardIndex)
         {
-            if (Hand.Contains(card))
+            if (cardIndex < 0 || cardIndex >= Hand.Count)
             {
-
+                throw new FoolExceptions("Card Index can be 0-5");
             }
-            else
-            {
-                throw new FoolExceptions("Cant play card which is not in my hand");
-            }
+            var card = Hand[cardIndex];
+            Hand.Remove(card);
+            return card;
         }
         public override string ToString()
         {
