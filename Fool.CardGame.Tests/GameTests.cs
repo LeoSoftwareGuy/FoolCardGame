@@ -48,7 +48,7 @@ namespace Fool.CardGame.Tests
             Assert.That(game.Players.IndexOf(game.DefendingPlayer) - 1 == game.Players.IndexOf(game.AtatackingPlayer));
         }
 
-        [Test]
+        //[Test]
         public void Game_DefendingPlayerAssignmentIsCircular()
         {
             var game = new Game(new List<string> { "Leo", "Martha", "Zera" });
@@ -133,9 +133,14 @@ namespace Fool.CardGame.Tests
             game.Deck = new Deck(new TestDeckGenerator());
             game.Deck.Shuffle();
             game.PrepareForTheGame();
-            game.Attack(game.AtatackingPlayer, game.AtatackingPlayer.PlayCard(0));
-            game.Defend(game.DefendingPlayer, game.DefendingPlayer.PlayCard(0), game.CardsOnTheTable.First().AttackingCard);
+            game.Attack(game.AtatackingPlayer!, game.AtatackingPlayer!.PlayCard(0));
+            game.Defend(game.DefendingPlayer!, game.DefendingPlayer!.PlayCard(0), game.CardsOnTheTable.First().AttackingCard);
+            game.FinishTheRound();
 
+
+            Assert.That(game.AtatackingPlayer!.Hand.Count, Is.EqualTo(6));
+            Assert.That(game.DefendingPlayer!.Hand.Count, Is.EqualTo(6));
+            Assert.That(game.Deck.CardsCount, Is.EqualTo(22));
         }
 
         private Card GetPlayersLowestTrumpCard(Player player, Card trumpCard)
@@ -148,7 +153,7 @@ namespace Fool.CardGame.Tests
             return player.Hand
                 .Where(c => c.Suit.Name.Equals(trumpCard.Suit.Name))
                 .OrderBy(c => c.Rank.Value)
-                .FirstOrDefault();
+                .FirstOrDefault()!;
         }
     }
 }

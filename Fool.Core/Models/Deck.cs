@@ -48,6 +48,11 @@ namespace Fool.Core.Models
             return cardsToBeGive;
         }
 
+        public bool HasCards()
+        {
+            return Cards.Any();
+        }
+
         private List<Card> FillInTheDeck()
         {
             return _cardDeckGenerator.GenerateDeck();

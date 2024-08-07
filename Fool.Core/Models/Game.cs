@@ -124,9 +124,9 @@ namespace Fool.Core.Models
 
         public void Attack(Player player, Card card)
         {
-            if (AtatackingPlayer != player)
+            if (_attackingPlayer != player)
             {
-                throw new FoolExceptions($"Player:{player.Name} cant attack as its player:{AtatackingPlayer?.Name} turn");
+                throw new FoolExceptions($"Player:{player.Name} cant attack as its player:{_attackingPlayer?.Name} turn");
             }
             var tableCard = new TableCard(Deck.TrumpCard, card);
             _cardsOnTheTable.Add(tableCard);
@@ -146,6 +146,50 @@ namespace Fool.Core.Models
             }
 
             card.Defend(defendingCard);
+        }
+
+        public void FinishTheRound()
+        {
+            if (_cardsOnTheTable.All(c => c.DefendingCard != null))
+            {
+                // Defending player defended successfully
+                _cardsOnTheTable = new List<TableCard>();
+            }
+            else
+            {
+                foreach (var card in _cardsOnTheTable)
+                {
+                    DefendingPlayer?.TakeCards(_cardsOnTheTable.Select(c => c.AttackingCard).ToList());
+                    DefendingPlayer?.TakeCards(_cardsOnTheTable.Where(c => c.DefendingCard != null)
+                                             .Select(c => c.DefendingCard)
+                                             .ToList()!);
+                }
+
+                _cardsOnTheTable.Clear();
+            }
+
+            DrawMissingCardsAfterRound();
+
+            // need to change attacking player, defending player becomes attackign player
+        }
+
+        private void DrawMissingCardsAfterRound()
+        {
+            // make sure that each player has 6 cards in the end of the round
+            // first player to take cards is attacking player, last one to take is defending player
+
+            var orderedPlayers = Players.OrderBy(p => p != _attackingPlayer) // if expression gives false, it goes before true, so all attacking players are first
+                                          .ThenBy(p => p == DefendingPlayer)
+                                          .ThenBy(p => Players.IndexOf(p))      // Maintain order for other players
+                                          .ToList();
+
+            foreach (var player in orderedPlayers)
+            {
+                while (player.Hand.Count < 6 && Deck.HasCards())
+                {
+                    player.TakeCard(Deck.PullCard());
+                }
+            }
         }
     }
 }
