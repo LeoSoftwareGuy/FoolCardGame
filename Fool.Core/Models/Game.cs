@@ -7,12 +7,11 @@ namespace Fool.Core.Models
     public class Game
     {
         private Player? _attackingPlayer;
-        private List<TableCard> _cardsOnTheTable;
         public Game(List<string> playerNames)
         {
             Deck = new Deck(new CardDeckGenerator());
             Players = new List<Player>();
-            _cardsOnTheTable = new List<TableCard>();
+            CardsOnTheTable = new List<TableCard>();
 
             Deck.Shuffle();
             LetPlayersToTheTable(playerNames);
@@ -20,7 +19,7 @@ namespace Fool.Core.Models
         public Deck Deck { get; set; }
         public List<Player> Players { get; }
 
-        public IEnumerable<TableCard> CardsOnTheTable => _cardsOnTheTable;
+        public List<TableCard> CardsOnTheTable { get; private set; }
 
 
         public Player? AtatackingPlayer
@@ -73,7 +72,7 @@ namespace Fool.Core.Models
         {
             foreach (var name in playerNames)
             {
-                Players.Add(new Player(name));
+                Players.Add(new Player(name, this));
             }
         }
 
@@ -83,6 +82,59 @@ namespace Fool.Core.Models
             {
                 player.TakeCards(Deck.DealHand());
             }
+        }
+
+
+
+        public void Attack(Player player, Card card)
+        {
+            if (_attackingPlayer != player)
+            {
+                throw new FoolExceptions($"Player:{player.Name} cant attack as its player:{_attackingPlayer?.Name} turn");
+            }
+            var tableCard = new TableCard(Deck.TrumpCard, card);
+            CardsOnTheTable.Add(tableCard);
+        }
+
+        public void Defend(Player player, Card defendingCard, Card attackingCard)
+        {
+            if (DefendingPlayer != player)
+            {
+                throw new FoolExceptions($"Player:{player.Name} cant defend, as defending player is {DefendingPlayer?.Name}");
+            }
+
+            var card = CardsOnTheTable.FirstOrDefault(x => x.AttackingCard == attackingCard);
+            if (card == null)
+            {
+                throw new FoolExceptions("Attacking card was not found on the table");
+            }
+
+            card.Defend(defendingCard);
+        }
+
+        public void FinishTheRound()
+        {
+            if (CardsOnTheTable.All(c => c.DefendingCard != null))
+            {
+                // Defending player defended successfully
+                CardsOnTheTable = new List<TableCard>();
+            }
+            else
+            {
+                foreach (var card in CardsOnTheTable)
+                {
+                    DefendingPlayer?.TakeCards(CardsOnTheTable.Select(c => c.AttackingCard).ToList());
+                    DefendingPlayer?.TakeCards(CardsOnTheTable.Where(c => c.DefendingCard != null)
+                                             .Select(c => c.DefendingCard)
+                                             .ToList()!);
+                }
+
+                CardsOnTheTable.Clear();
+            }
+
+            DrawMissingCardsAfterRound();
+
+            // need to change attacking player, defending player becomes attackign player
         }
 
         private Player DecideWhoPlaysFirst()
@@ -119,58 +171,6 @@ namespace Fool.Core.Models
                     }
                 }
             }
-        }
-
-
-        public void Attack(Player player, Card card)
-        {
-            if (_attackingPlayer != player)
-            {
-                throw new FoolExceptions($"Player:{player.Name} cant attack as its player:{_attackingPlayer?.Name} turn");
-            }
-            var tableCard = new TableCard(Deck.TrumpCard, card);
-            _cardsOnTheTable.Add(tableCard);
-        }
-
-        public void Defend(Player player, Card defendingCard, Card attackingCard)
-        {
-            if (DefendingPlayer != player)
-            {
-                throw new FoolExceptions($"Player:{player.Name} cant defend, as defending player is {DefendingPlayer?.Name}");
-            }
-
-            var card = _cardsOnTheTable.FirstOrDefault(x => x.AttackingCard == attackingCard);
-            if (card == null)
-            {
-                throw new FoolExceptions("Attacking card was not found on the table");
-            }
-
-            card.Defend(defendingCard);
-        }
-
-        public void FinishTheRound()
-        {
-            if (_cardsOnTheTable.All(c => c.DefendingCard != null))
-            {
-                // Defending player defended successfully
-                _cardsOnTheTable = new List<TableCard>();
-            }
-            else
-            {
-                foreach (var card in _cardsOnTheTable)
-                {
-                    DefendingPlayer?.TakeCards(_cardsOnTheTable.Select(c => c.AttackingCard).ToList());
-                    DefendingPlayer?.TakeCards(_cardsOnTheTable.Where(c => c.DefendingCard != null)
-                                             .Select(c => c.DefendingCard)
-                                             .ToList()!);
-                }
-
-                _cardsOnTheTable.Clear();
-            }
-
-            DrawMissingCardsAfterRound();
-
-            // need to change attacking player, defending player becomes attackign player
         }
 
         private void DrawMissingCardsAfterRound()

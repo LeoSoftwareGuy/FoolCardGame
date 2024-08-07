@@ -133,8 +133,8 @@ namespace Fool.CardGame.Tests
             game.Deck = new Deck(new TestDeckGenerator());
             game.Deck.Shuffle();
             game.PrepareForTheGame();
-            game.Attack(game.AtatackingPlayer!, game.AtatackingPlayer!.PlayCard(0));
-            game.Defend(game.DefendingPlayer!, game.DefendingPlayer!.PlayCard(0), game.CardsOnTheTable.First().AttackingCard);
+            game.AtatackingPlayer?.Attack(0);
+            game.DefendingPlayer?.Defend(0, 0);
             game.FinishTheRound();
 
 

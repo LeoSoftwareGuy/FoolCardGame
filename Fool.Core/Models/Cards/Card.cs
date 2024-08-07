@@ -8,7 +8,6 @@
             Suit = suit;
         }
 
-
         public CardRank Rank { get; }
         public CardSuit Suit { get; }
 
