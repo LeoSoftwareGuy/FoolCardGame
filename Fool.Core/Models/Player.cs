@@ -37,15 +37,16 @@ namespace Fool.Core.Models
             Hand.Clear();
         }
 
-        public Card PlayCard(int cardIndex)
+        public void FirstAttack(int cardIndex)
         {
             if (cardIndex < 0 || cardIndex >= Hand.Count)
             {
                 throw new FoolExceptions("Card Index can be 0-5");
             }
             var card = Hand[cardIndex];
+           
+            _game.FirstAttack(this, card);
             Hand.Remove(card);
-            return card;
         }
 
         public void Attack(int cardIndex)
@@ -55,7 +56,6 @@ namespace Fool.Core.Models
                 throw new FoolExceptions("Card Index can be 0-5");
             }
             var card = Hand[cardIndex];
-           
             _game.Attack(this, card);
             Hand.Remove(card);
         }

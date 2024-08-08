@@ -1,6 +1,7 @@
 ﻿using Fool.Core.Exceptions;
 using Fool.Core.Models.Cards;
 using Fool.Core.Models.Table;
+using System.ComponentModel.DataAnnotations;
 
 namespace Fool.Core.Models
 {
@@ -68,13 +69,6 @@ namespace Fool.Core.Models
             _attackingPlayer = DecideWhoPlaysFirst();
         }
 
-        private void LetPlayersToTheTable(List<string> playerNames)
-        {
-            foreach (var name in playerNames)
-            {
-                Players.Add(new Player(name, this));
-            }
-        }
 
         public void DealHands()
         {
@@ -84,9 +78,28 @@ namespace Fool.Core.Models
             }
         }
 
+        public void FinishTheRound()
+        {
+            if (CardsOnTheTable.All(c => c.DefendingCard != null))
+            {
+                // Defending player defended successfully
+                CardsOnTheTable = new List<TableCard>();
+            }
+            else
+            {
+                DefendingPlayer?.TakeCards(CardsOnTheTable.Select(c => c.AttackingCard).ToList());
+                DefendingPlayer?.TakeCards(CardsOnTheTable.Where(c => c.DefendingCard != null)
+                                         .Select(c => c.DefendingCard)
+                                         .ToList()!);
+                CardsOnTheTable.Clear();
+            }
 
+            DrawMissingCardsAfterRound();
 
-        public void Attack(Player player, Card card)
+            // need to change attacking player, defending player becomes attackign player
+        }
+
+        internal void FirstAttack(Player player, Card card)
         {
             if (_attackingPlayer != player)
             {
@@ -96,7 +109,26 @@ namespace Fool.Core.Models
             CardsOnTheTable.Add(tableCard);
         }
 
-        public void Defend(Player player, Card defendingCard, Card attackingCard)
+        internal void Attack(Player player, Card card)
+        {
+            if (DefendingPlayer == player)
+            {
+                throw new FoolExceptions($"Player:{player.Name} cant attack as he is defending");
+            }
+
+            var cardsThatCanBeAddedDueToOtherAttackingCardsOnTheTable = CardsOnTheTable.Select(c => c.AttackingCard.Rank.Value).ToList();
+            var cardsThatCanBeAddedDueToOtherDefendingCardsOnTheTable = CardsOnTheTable.Select(c => c.DefendingCard?.Rank.Value).ToList();
+
+            if (!cardsThatCanBeAddedDueToOtherAttackingCardsOnTheTable.Contains(card.Rank.Value) &&
+                !cardsThatCanBeAddedDueToOtherDefendingCardsOnTheTable.Contains(card.Rank.Value))
+            {
+                throw new FoolExceptions($"Cards which are added to the attack should have the same rank as those on the table");
+            }
+            var tableCard = new TableCard(Deck.TrumpCard, card);
+            CardsOnTheTable.Add(tableCard);
+        }
+
+        internal void Defend(Player player, Card defendingCard, Card attackingCard)
         {
             if (DefendingPlayer != player)
             {
@@ -112,29 +144,12 @@ namespace Fool.Core.Models
             card.Defend(defendingCard);
         }
 
-        public void FinishTheRound()
+        private void LetPlayersToTheTable(List<string> playerNames)
         {
-            if (CardsOnTheTable.All(c => c.DefendingCard != null))
+            foreach (var name in playerNames)
             {
-                // Defending player defended successfully
-                CardsOnTheTable = new List<TableCard>();
+                Players.Add(new Player(name, this));
             }
-            else
-            {
-                foreach (var card in CardsOnTheTable)
-                {
-                    DefendingPlayer?.TakeCards(CardsOnTheTable.Select(c => c.AttackingCard).ToList());
-                    DefendingPlayer?.TakeCards(CardsOnTheTable.Where(c => c.DefendingCard != null)
-                                             .Select(c => c.DefendingCard)
-                                             .ToList()!);
-                }
-
-                CardsOnTheTable.Clear();
-            }
-
-            DrawMissingCardsAfterRound();
-
-            // need to change attacking player, defending player becomes attackign player
         }
 
         private Player DecideWhoPlaysFirst()

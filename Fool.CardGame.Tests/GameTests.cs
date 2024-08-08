@@ -133,7 +133,7 @@ namespace Fool.CardGame.Tests
             game.Deck = new Deck(new TestDeckGenerator());
             game.Deck.Shuffle();
             game.PrepareForTheGame();
-            game.AtatackingPlayer?.Attack(0);
+            game.AtatackingPlayer?.FirstAttack(0);
             game.DefendingPlayer?.Defend(0, 0);
             game.FinishTheRound();
 
@@ -141,6 +141,29 @@ namespace Fool.CardGame.Tests
             Assert.That(game.AtatackingPlayer!.Hand.Count, Is.EqualTo(6));
             Assert.That(game.DefendingPlayer!.Hand.Count, Is.EqualTo(6));
             Assert.That(game.Deck.CardsCount, Is.EqualTo(22));
+        }
+
+        [Test]
+        public void Game_PlayOneRound_UnsuccessfulDefence_DefencingPlayerTakesAllCards()
+        {
+            var game = new Game(new List<string> { "Leo", "Elmaz", "Mio" });
+            game.Deck = new Deck(new TestDeckGenerator());
+            game.Deck.Shuffle();
+            game.PrepareForTheGame();
+
+            var attackingPlayer = game.AtatackingPlayer;
+            var secondAttackingPlayer = game.Players[0];
+            var defendingPlayer = game.DefendingPlayer;
+
+            attackingPlayer?.FirstAttack(0);
+            defendingPlayer.Defend(3, 0);
+            secondAttackingPlayer.Attack(1);
+
+            game.FinishTheRound();
+
+            Assert.That(game.AtatackingPlayer!.Hand.Count, Is.EqualTo(6));
+            Assert.That(game.DefendingPlayer!.Hand.Count, Is.EqualTo(8));
+            Assert.That(game.Deck.CardsCount, Is.EqualTo(36 - 6 - 6 - 6 - 2));
         }
 
         private Card GetPlayersLowestTrumpCard(Player player, Card trumpCard)
