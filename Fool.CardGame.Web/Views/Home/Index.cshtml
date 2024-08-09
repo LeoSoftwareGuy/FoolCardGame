@@ -1,0 +1,78 @@
+﻿<label id="nameLabel"></label>
+<div id="loginBlock">
+    <input type="text" id="nameInput" placeholder="Name" />
+    <button class="btn btn-info" onclick="login()">Lets Play</button>
+</div>
+<button class="btn btn-danger" id="logoutBtn" onclick="logout()">Logout</button>
+
+<script>
+    var user = {};
+    var authCookieName = 'auth_cookie';
+
+    function init() {
+        let cookieAuth = getUserAlertCookie(authCookieName);
+
+        if (cookieAuth == null) {
+            document.getElementById('nameLabel').classList.add('hidden');
+            document.getElementById('logoutBtn').classList.add('hidden');
+            document.getElementById('loginBlock').classList.remove('hidden');
+        } else {
+            user.name = cookieAuth;
+            document.getElementById('loginBlock').classList.add('hidden');
+            document.getElementById('nameLabel').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+        }
+
+        if (user.name) {
+            document.getElementById('nameLabel').innerHTML = user.name;
+        }
+        else {
+            document.getElementById('nameLabel').innerHTML = '';
+        }
+    }
+
+    function login() {
+        let name = document.getElementById('nameInput').value;
+        setUserAlertCookie(authCookieName, name, 1);
+        init();
+    }
+
+    function logout() {
+        deleteCookie(authCookieName);
+        init();
+    }
+
+    function deleteCookie(name) {
+        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+    function setUserAlertCookie(name, value, days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        } else if (days === 0) {
+            expires = "; expires=Thu, 01 Jan 1970 00:00:00 UTC"; // Set to a date in the past
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    function getUserAlertCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+  
+
+</script>
+<style>
+    /* CSS for the hidden class */
+    .hidden {
+        display: none;
+    }
+</style>

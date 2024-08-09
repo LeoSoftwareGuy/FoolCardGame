@@ -5,7 +5,9 @@ VisualStudioVersion = 17.10.35027.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fool.Core", "Fool.Core\Fool.Core.csproj", "{A6E2640C-E1BC-4E63-9F5C-0122CD1B993E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fool.CardGame.Tests", "Fool.CardGame.Tests\Fool.CardGame.Tests.csproj", "{951F5832-8197-4DD0-91C9-9C78BE2C53CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fool.CardGame.Tests", "Fool.CardGame.Tests\Fool.CardGame.Tests.csproj", "{951F5832-8197-4DD0-91C9-9C78BE2C53CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fool.CardGame.Web", "Fool.CardGame.Web\Fool.CardGame.Web.csproj", "{E748C936-CE79-4F9C-ACE3-5A6C4FD4F30A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{951F5832-8197-4DD0-91C9-9C78BE2C53CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{951F5832-8197-4DD0-91C9-9C78BE2C53CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{951F5832-8197-4DD0-91C9-9C78BE2C53CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E748C936-CE79-4F9C-ACE3-5A6C4FD4F30A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E748C936-CE79-4F9C-ACE3-5A6C4FD4F30A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E748C936-CE79-4F9C-ACE3-5A6C4FD4F30A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E748C936-CE79-4F9C-ACE3-5A6C4FD4F30A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
