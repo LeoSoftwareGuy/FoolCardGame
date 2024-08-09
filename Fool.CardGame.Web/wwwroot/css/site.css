@@ -1,10 +1,10 @@
 html {
-  font-size: 14px;
+  font-size: 62.5%;
 }
 
 @media (min-width: 768px) {
   html {
-    font-size: 16px;
+    font-size: 1.6rem;
   }
 }
 
@@ -18,5 +18,5 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  margin-bottom: 6rem;
 }
