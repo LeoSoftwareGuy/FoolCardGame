@@ -5,23 +5,24 @@
 </div>
 <button class="btn btn-danger" id="logoutBtn" onclick="logout()">Logout</button>
 
-<div class="playingCards">
-    <div class="playingCard">
-        <div class="playingCard-info">
-            <label class="playingCard-info__value">6</label>
-            <label class="playingCard-info__rank">♦</label>
-        </div>
+
+
+<div id="main" class="hidden">
+    <button class="btn btn-success createTableBtn" onclick="createTable()">Create Table</button>
+    <div id="table">
+        <div id="deck"></div>
+        <div id="field"></div>
     </div>
-    <div class="playingCard">
-        <div class="playingCard-info">
-            <label class="playingCard-info__value">6</label>
-            <label class="playingCard-info__rank">♦</label>
-        </div>
+    <div id="playingCards">
     </div>
+</div>
+
+
+<div class="hidden">
     <div class="playingCard">
         <div class="playingCard-info">
-            <label class="playingCard-info__value">6</label>
-            <label class="playingCard-info__rank">♦</label>
+            <label class="playingCard-info__rank">6</label>
+            <label class="playingCard-info__suit">♦</label>
         </div>
     </div>
 </div>
@@ -29,19 +30,27 @@
 <script>
     var user = {};
     var authCookieName = 'auth_cookie';
+    var authCookieSecret = 'auth_secret';
+    init(); // perhaps dont need it here
 
     function init() {
-        let cookieAuth = getUserAlertCookie(authCookieName);
+        let cookieName = getCookie(authCookieName);
+        let cookieSecret = getCookie(authCookieSecret);
 
-        if (cookieAuth == null) {
+        if (cookieName == null || cookieSecret == null) {
+            document.getElementById('main').classList.add('hidden');
             document.getElementById('nameLabel').classList.add('hidden');
             document.getElementById('logoutBtn').classList.add('hidden');
             document.getElementById('loginBlock').classList.remove('hidden');
+     
         } else {
-            user.name = cookieAuth;
+            user.name = cookieName;
+            user.secret = cookieSecret;
             document.getElementById('loginBlock').classList.add('hidden');
             document.getElementById('nameLabel').classList.remove('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('main').classList.remove('hidden');
+            getStatus();
         }
 
         if (user.name) {
@@ -52,21 +61,27 @@
         }
     }
 
+    // You create 2 cookies when you login
     function login() {
         let name = document.getElementById('nameInput').value;
-        setUserAlertCookie(authCookieName, name, 1);
+        let secret = generateGuid();
+
+        setCookie(authCookieName, name, 1);
+        setCookie(authCookieSecret, secret, 1)
         init();
     }
 
+    // You delete 2 cookies when you logout
     function logout() {
         deleteCookie(authCookieName);
+        deleteCookie(authCookieSecret);
         init();
     }
 
     function deleteCookie(name) {
         document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
-    function setUserAlertCookie(name, value, days) {
+    function setCookie(name, value, days) {
         var expires = "";
         if (days) {
             var date = new Date();
@@ -78,7 +93,7 @@
         document.cookie = name + "=" + (value || "") + expires + "; path=/";
     }
 
-    function getUserAlertCookie(name) {
+    function getCookie(name) {
         var nameEQ = name + "=";
         var ca = document.cookie.split(';');
         for (var i = 0; i < ca.length; i++) {
@@ -89,6 +104,80 @@
         return null;
     }
 
+    function generateGuid() {
+        return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+            (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+        );
+    }
+
+
+    function createTable() {
+        SendRequest({
+            method: 'POST',
+            url: '/Home/CreateTable',
+            body: {},
+            success: function (data) {
+                let tableId = JSON.parse(data.responseText);
+                sitToTheTable(tableId);
+            },
+            error: function (data) {
+                alert("Something went wrong during creating of table")
+            }
+        });
+    }
+
+    // passing params as if its GET method, bad approach but for some reason POST does not work.
+    function sitToTheTable(tableId) {
+        let url = `/Home/JoinTable?playerSecret=${encodeURIComponent(user.secret)}&playerName=${encodeURIComponent(user.name)}&tableGuid=${encodeURIComponent(tableId)}`;
+        SendRequest({
+            method: 'POST',
+            url: url,
+            body: {         
+            },
+            success: function (data) {
+                getStatus()
+            },
+            error: function (data) {
+                alert("Something went wrong during creating of table")
+            }
+        });
+    }
+
+
+    function getStatus() {
+        SendRequest({
+            method: 'GET',
+            url: '/Home/GetStatus?playerSecret='+user.secret,
+            success: function (data) {
+                let status = JSON.parse(data.responseText);
+                if (status.table == null) {
+                    // we need to draw available tables for user to sit to
+                }
+                else {
+                    for (let cardIndex = 0; cardIndex < status.table.playerHand.length; cardIndex++) {
+                        let card = status.table.playerHand[cardIndex];
+                        let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
+
+                        cardDiv.getElementsByClassName('playingCard-info__rank')[0].innerHTML = card.rank;
+                        cardDiv.getElementsByClassName('playingCard-info__suit')[0].innerHTML = card.suit;
+                        document.getElementById('playingCards').appendChild(cardDiv);
+                    }
+                    if (status.table.trump != null) {
+                        let trumpCard = status.table.trump;
+                        let trumpCardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
+
+                        trumpCardDiv.getElementsByClassName('playingCard-info__rank')[0].innerHTML = trumpCard.rank;
+                        trumpCardDiv.getElementsByClassName('playingCard-info__suit')[0].innerHTML = trumpCard.suit;
+                        document.getElementById('deck').appendChild(trumpCardDiv);
+                    }
+                }
+            },
+            error: function (data) {
+                alert("Something went wrong during creating of table")
+            }
+        });
+    }
+
 
 </script>
 <style>
@@ -97,10 +186,27 @@
         display: none;
     }
 
-    .playingCards {
-        margin-top: 5rem;
+    #main {
+        margin-top:3rem;
+        width:100%;
+    }
+
+    .createTableBtn {
+       
+    }
+
+    #table {
+        margin-top:1rem;
+        display:flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #playingCards {
+        margin-top: 3rem;
         width: 100%;
         display: flex;
+        justify-content: center;
         align-items: center;
         column-gap: 0.2rem;
     }
@@ -123,13 +229,13 @@
         column-gap: .01rem;
     }
 
-    .playingCard-info__value {
+    .playingCard-info__rank {
         display: block;
         font-size: 1.0rem;
         font-weight: 500;
     }
 
-    .playingCard-info__rank {
+    .playingCard-info__suit {
         display: block;
         font-size: 3.2rem;
         font-weight: 500;

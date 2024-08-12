@@ -1,7 +1,11 @@
+using Fool.Core.Services;
+using Fool.Core.Services.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton<ITableService, TableService>();
 
 var app = builder.Build();
 

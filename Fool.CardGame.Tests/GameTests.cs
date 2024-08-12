@@ -15,7 +15,12 @@ namespace Fool.CardGame.Tests
         [Test]
         public void Game_ActivePlayerHasTheLowestTrumpCard()
         {
-            var game = new Game(new List<string> { "Leo", "Martha", "Zera" });
+            var game = new Game();
+
+            game.AddPlayer("Leo");
+            game.AddPlayer("Martha");
+            game.AddPlayer("Zera");
+
             game.PrepareForTheGame();
 
             Assert.IsNotNull(game.AtatackingPlayer);
@@ -39,7 +44,12 @@ namespace Fool.CardGame.Tests
         [Test]
         public void Game_DefendingPlayerGoesAfterAttackingPlayer()
         {
-            var game = new Game(new List<string> { "Leo", "Martha", "Zera" });
+            var game = new Game();
+
+            game.AddPlayer("Leo");
+            game.AddPlayer("Martha");
+            game.AddPlayer("Zera");
+
             game.PrepareForTheGame();
             Assert.IsNotNull(game.AtatackingPlayer);
             Assert.IsNotNull(game.DefendingPlayer);
@@ -51,7 +61,11 @@ namespace Fool.CardGame.Tests
         //[Test]
         public void Game_DefendingPlayerAssignmentIsCircular()
         {
-            var game = new Game(new List<string> { "Leo", "Martha", "Zera" });
+            var game = new Game();
+
+            game.AddPlayer("Leo");
+            game.AddPlayer("Martha");
+            game.AddPlayer("Zera");
 
             game.PrepareForTheGame();
             while (game?.AtatackingPlayer?.Name != "Zera")
@@ -129,7 +143,11 @@ namespace Fool.CardGame.Tests
         [Test]
         public void Game_PlayOneRound_SuccessfulDefence()
         {
-            var game = new Game(new List<string> { "Leo", "Elmaz" });
+            var game = new Game();
+
+            game.AddPlayer("Leo");
+            game.AddPlayer("Elmaz");
+
             game.Deck = new Deck(new TestDeckGenerator());
             game.Deck.Shuffle();
             game.PrepareForTheGame();
@@ -146,7 +164,12 @@ namespace Fool.CardGame.Tests
         [Test]
         public void Game_PlayOneRound_UnsuccessfulDefence_DefencingPlayerTakesAllCards()
         {
-            var game = new Game(new List<string> { "Leo", "Elmaz", "Mio" });
+            var game = new Game();
+
+            game.AddPlayer("Leo");
+            game.AddPlayer("Elmaz");
+            game.AddPlayer("Mio");
+
             game.Deck = new Deck(new TestDeckGenerator());
             game.Deck.Shuffle();
             game.PrepareForTheGame();

@@ -6,4 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Fool.Core\Fool.Core.csproj" />
+  </ItemGroup>
+
 </Project>

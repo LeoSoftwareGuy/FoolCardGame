@@ -1,21 +1,19 @@
 ﻿using Fool.Core.Exceptions;
 using Fool.Core.Models.Cards;
 using Fool.Core.Models.Table;
-using System.ComponentModel.DataAnnotations;
 
 namespace Fool.Core.Models
 {
     public class Game
     {
         private Player? _attackingPlayer;
-        public Game(List<string> playerNames)
+        public Game()
         {
             Deck = new Deck(new CardDeckGenerator());
             Players = new List<Player>();
             CardsOnTheTable = new List<TableCard>();
 
             Deck.Shuffle();
-            LetPlayersToTheTable(playerNames);
         }
         public Deck Deck { get; set; }
         public List<Player> Players { get; }
@@ -144,6 +142,18 @@ namespace Fool.Core.Models
             card.Defend(defendingCard);
         }
 
+
+        public Player AddPlayer(string playerName)
+        {
+            if (Players.Count >= 6)
+            {
+                throw new FoolExceptions("Max number of player per table is 6");
+            }
+
+            var player = new Player(playerName, this);
+            Players.Add(player);
+            return player;
+        }
         private void LetPlayersToTheTable(List<string> playerNames)
         {
             foreach (var name in playerNames)

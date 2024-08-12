@@ -61,8 +61,11 @@ namespace Fool.CardGame.Tests
         [Test]
         public void Deck_GameWithThreePlayers()
         {
-            var players = new List<string> { "Leo", "Vins", "Alan" };
-            var game = new Game(players);
+            var game = new Game();
+            game.AddPlayer("Leo");
+            game.AddPlayer("Vins");
+            game.AddPlayer("Alan");
+
             game.PrepareForTheGame();
             Assert.That(game?.Deck.CardsCount, Is.EqualTo(18));
             Assert.That(game?.Players.Count, Is.EqualTo(3));
