@@ -6,14 +6,18 @@
 <button class="btn btn-danger" id="logoutBtn" onclick="logout()">Logout</button>
 
 
-
 <div id="main" class="hidden">
     <button class="btn btn-success createTableBtn" onclick="createTable()">Create Table</button>
+
+    <div id="playingCardsContainer">
+        <div id="playingCards">
+        </div>
+        <button id="makeMoveBtn" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
+    </div>
+
     <div id="table">
         <div id="deck"></div>
         <div id="field"></div>
-    </div>
-    <div id="playingCards">
     </div>
 </div>
 
@@ -25,10 +29,14 @@
             <label class="playingCard-info__suit">♦</label>
         </div>
     </div>
+    <div class="deck-card__shirt">
+        <label class="deck-card__number"></label>
+    </div>
 </div>
 
 <script>
     var user = {};
+    var gameStatus = null;
     var authCookieName = 'auth_cookie';
     var authCookieSecret = 'auth_secret';
     init(); // perhaps dont need it here
@@ -42,7 +50,7 @@
             document.getElementById('nameLabel').classList.add('hidden');
             document.getElementById('logoutBtn').classList.add('hidden');
             document.getElementById('loginBlock').classList.remove('hidden');
-     
+
         } else {
             user.name = cookieName;
             user.secret = cookieSecret;
@@ -132,7 +140,7 @@
         SendRequest({
             method: 'POST',
             url: url,
-            body: {         
+            body: {
             },
             success: function (data) {
                 getStatus()
@@ -147,28 +155,47 @@
     function getStatus() {
         SendRequest({
             method: 'GET',
-            url: '/Home/GetStatus?playerSecret='+user.secret,
+            url: '/Home/GetStatus?playerSecret=' + user.secret,
             success: function (data) {
                 let status = JSON.parse(data.responseText);
+                gameStatus = status;
                 if (status.table == null) {
-                    // we need to draw available tables for user to sit to
-                }
-                else {
+                    // we need to draw available tables for the user to sit at
+                } else {
                     for (let cardIndex = 0; cardIndex < status.table.playerHand.length; cardIndex++) {
                         let card = status.table.playerHand[cardIndex];
                         let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
 
-                        cardDiv.getElementsByClassName('playingCard-info__rank')[0].innerHTML = card.rank;
-                        cardDiv.getElementsByClassName('playingCard-info__suit')[0].innerHTML = card.suit;
+                        // Add event listener to the card div
+                        cardDiv.addEventListener('click', function (event) {
+                            // Toggle the active class on the card div itself, not the label
+                            if (this.classList.contains('active')) {
+                                this.classList.remove('active');
+                            } else {
+                                this.classList.add('active');
+                            }
+                            checkMoves();
+                        });
+
+                        cardDiv.getElementsByClassName('playingCard-info__rank')[0].innerHTML = getRank(card.rank, card.suit);
+                        cardDiv.getElementsByClassName('playingCard-info__suit')[0].innerHTML = getSuit(card.suit);
+
                         document.getElementById('playingCards').appendChild(cardDiv);
                     }
+
                     if (status.table.trump != null) {
                         let trumpCard = status.table.trump;
                         let trumpCardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
 
-                        trumpCardDiv.getElementsByClassName('playingCard-info__rank')[0].innerHTML = trumpCard.rank;
-                        trumpCardDiv.getElementsByClassName('playingCard-info__suit')[0].innerHTML = trumpCard.suit;
+                        trumpCardDiv.getElementsByClassName('playingCard-info__rank')[0].innerHTML = getRank(trumpCard.rank);
+                        trumpCardDiv.getElementsByClassName('playingCard-info__suit')[0].innerHTML = getSuit(trumpCard.suit);
                         document.getElementById('deck').appendChild(trumpCardDiv);
+                    }
+
+                    if (status.table.deckCardsCount > 1) {
+                        let cardDiv = document.getElementsByClassName('deck-card__shirt')[0].cloneNode(true);
+                        cardDiv.getElementsByClassName('deck-card__number')[0].innerHTML = status.table.deckCardsCount;
+                        document.getElementById('deck').appendChild(cardDiv);
                     }
                 }
             },
@@ -178,33 +205,95 @@
         });
     }
 
+    function checkMoves(){
+        let selectedCard = document.querySelectorAll('.playingCard.active');
+        if (selectedCard.length > 0){
+            document.getElementById('makeMoveBtn').classList.remove('hidden');
+        } else {
+            document.getElementById('makeMoveBtn').classList.add('hidden');
+        }
+    }
+
+    function makeAMove() {
+        let selectedCards = document.querySelectorAll('.playingCard.active');
+        //let cardIndex = Array.from(document.getElementById('playingCards').children).indexOf(selectedCard[0]);
+        if (selectedCards.length > 0) {
+          let url = `/Home/Attack?tableId=${encodeURIComponent(gameStatus.tableId)}&playerSecret=${encodeURIComponent(user.secret)}&playerName=${encodeURIComponent(user.name)}&cardId=1`;
+            SendRequest({
+                method: 'POST',
+                url: url,
+                body: {}, 
+                success: function (data) {
+                    getStatus();
+                },
+                error: function (data) {
+                    alert("Attack method did not work")
+                }
+            });
+        }
+        
+       
+    }
+
+    function getRank(value, suitChar) {
+        if (suitChar === '♦' || suitChar === '♥') {
+            return "<label style='color:red'>" + value + "</label>";
+        } else {
+            return value;
+        }
+    }
+
+    function getSuit(suitChar) {
+        if (suitChar === '♦' || suitChar === '♥') {
+            return "<label style='color:red'>" + suitChar + "</label>";
+        } else {
+            return suitChar;
+        }
+    }
+
+
 
 </script>
 <style>
     /* CSS for the hidden class */
     .hidden {
-        display: none;
+        display: none !important;
     }
 
     #main {
-        margin-top:3rem;
-        width:100%;
+        margin-top: 1rem;
+        width: 100%;
     }
 
     .createTableBtn {
-       
     }
 
     #table {
-        margin-top:1rem;
-        display:flex;
+        margin-top: 1rem;
+        display: flex;
         justify-content: center;
         align-items: center;
     }
 
-    #playingCards {
+    #deck {
+        margin-top:5rem;
+        position: relative;
+    }
+
+    #makeMoveBtn {
+        margin-top: 1rem;
+    }
+
+    #playingCardsContainer {
         margin-top: 3rem;
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;  
+    }
+
+    #playingCards {
+        margin-bottom: 1rem;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -212,12 +301,19 @@
     }
 
     .playingCard {
-        position: relative;
         width: 3rem;
         height: 6rem;
         border: 1px solid rgba(0,0,0,.125);
         background-color: #fff;
         border-radius: .25rem;
+    }
+
+    .playingCard.active {
+            width: 3.5rem; /* Increase width */
+            height: 7rem; /* Increase height */
+            border-color: rgba(0,0,0,.5); /* Darker border */
+            background-color: #f0f0f0; /* Slightly different background color */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add shadow */
     }
 
     .playingCard-info {
@@ -240,4 +336,27 @@
         font-size: 3.2rem;
         font-weight: 500;
     }
+
+
+
+    .deck-card__shirt {
+        position: absolute;
+        bottom: -18px;
+        left: -30px;
+        width: 6rem;
+        height: 3rem;
+        border: 1px solid rgba(0,0,0,.125);
+        background: repeating-linear-gradient( 45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px);
+        border-radius: .25rem;
+    }
+
+    .deck-card__number {
+        margin:auto;
+        width:100%;
+        color: white;
+        font-weight: 500;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
 </style>

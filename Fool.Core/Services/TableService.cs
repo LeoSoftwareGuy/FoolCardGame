@@ -78,6 +78,14 @@ namespace Fool.Core.Services
             return result;
         }
 
+        public void Attack(Guid tableId, string playerSecret, string playerName, int cardId)
+        {
+            var playerTable = TablesWithGames.Values.FirstOrDefault(t => t.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
+            var player = playerTable == null ? null : playerTable.PlayersAndTheirSecretKeys[playerSecret];
+
+            player.FirstAttack(cardId);
+        }
+
         private bool CheckIfPlayerIsAlreadyPlayingOnAnotherTable(string playerSecret)
         {
             return TablesWithGames.Values.Any(table => table.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));

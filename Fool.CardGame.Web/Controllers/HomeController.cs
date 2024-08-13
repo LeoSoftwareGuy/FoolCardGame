@@ -50,6 +50,13 @@ namespace Fool.CardGame.Web.Controllers
 
 
 
+        [HttpPost]
+        public void Attack(AttackingModel model)
+        {
+            _tableService.Attack(model.TableId, model.PlayerSecret, model.PlayerName, model.CardId);
+        }
+
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
