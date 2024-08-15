@@ -21,7 +21,7 @@ namespace Fool.Core.Models
         public List<TableCard> CardsOnTheTable { get; private set; }
 
 
-        public Player? AtatackingPlayer
+        public Player? AttackingPlayer
         {
             get
             {
@@ -97,17 +97,23 @@ namespace Fool.Core.Models
             // need to change attacking player, defending player becomes attackign player
         }
 
-        internal void FirstAttack(Player player, Card card)
+        internal void FirstAttack(Player player, List<Card> cards)
         {
             if (_attackingPlayer != player)
             {
                 throw new FoolExceptions($"Player:{player.Name} cant attack as its player:{_attackingPlayer?.Name} turn");
             }
-            var tableCard = new TableCard(Deck.TrumpCard, card);
-            CardsOnTheTable.Add(tableCard);
+            if (cards.Count > 0)
+            {
+                foreach (var card in cards)
+                {
+                    var tableCard = new TableCard(Deck.TrumpCard, card);
+                    CardsOnTheTable.Add(tableCard);
+                }
+            }
         }
 
-        internal void Attack(Player player, Card card)
+        internal void Attack(Player player, List<Card> cards)
         {
             if (DefendingPlayer == player)
             {
@@ -117,13 +123,17 @@ namespace Fool.Core.Models
             var cardsThatCanBeAddedDueToOtherAttackingCardsOnTheTable = CardsOnTheTable.Select(c => c.AttackingCard.Rank.Value).ToList();
             var cardsThatCanBeAddedDueToOtherDefendingCardsOnTheTable = CardsOnTheTable.Select(c => c.DefendingCard?.Rank.Value).ToList();
 
-            if (!cardsThatCanBeAddedDueToOtherAttackingCardsOnTheTable.Contains(card.Rank.Value) &&
-                !cardsThatCanBeAddedDueToOtherDefendingCardsOnTheTable.Contains(card.Rank.Value))
+            if (!cards.All(c => cardsThatCanBeAddedDueToOtherAttackingCardsOnTheTable.Contains(c.Rank.Value)
+                          || cardsThatCanBeAddedDueToOtherDefendingCardsOnTheTable.Contains(c.Rank.Value)))
             {
                 throw new FoolExceptions($"Cards which are added to the attack should have the same rank as those on the table");
             }
-            var tableCard = new TableCard(Deck.TrumpCard, card);
-            CardsOnTheTable.Add(tableCard);
+
+            foreach (var card in cards)
+            {
+                var tableCard = new TableCard(Deck.TrumpCard, card);
+                CardsOnTheTable.Add(tableCard);
+            }
         }
 
         internal void Defend(Player player, Card defendingCard, Card attackingCard)

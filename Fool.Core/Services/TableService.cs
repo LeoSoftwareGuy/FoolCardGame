@@ -53,7 +53,7 @@ namespace Fool.Core.Services
         // If Player does not have a table, return all table ids
         public dynamic GetStatus(string playerSecret)
         {
-            var playerTable = TablesWithGames.Values.FirstOrDefault(t => t.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
+            var playerTable = FindTableWhereUserIsPlaying(playerSecret);
             var player = playerTable == null ? null : playerTable.PlayersAndTheirSecretKeys[playerSecret];
 
             var result = new
@@ -80,15 +80,21 @@ namespace Fool.Core.Services
 
         public void Attack(Guid tableId, string playerSecret, string playerName, int cardId)
         {
-            var playerTable = TablesWithGames.Values.FirstOrDefault(t => t.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
+            var playerTable = FindTableWhereUserIsPlaying(playerSecret);
             var player = playerTable == null ? null : playerTable.PlayersAndTheirSecretKeys[playerSecret];
 
-            player.FirstAttack(cardId);
+            player.FirstAttack([cardId]);
         }
 
         private bool CheckIfPlayerIsAlreadyPlayingOnAnotherTable(string playerSecret)
         {
             return TablesWithGames.Values.Any(table => table.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
+        }
+
+        private Table? FindTableWhereUserIsPlaying(string playerSecret)
+        {
+            var table = TablesWithGames.Values.FirstOrDefault(t => t.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
+            return table == null ? null : table;
         }
     }
 }

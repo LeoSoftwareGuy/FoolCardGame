@@ -1,7 +1,8 @@
-using Fool.Core.Exceptions;
+﻿using Fool.Core.Exceptions;
 using Fool.Core.Models;
 using Fool.Core.Models.Cards;
 using Fool.Core.Models.Table;
+using NUnit.Framework.Constraints;
 
 namespace Fool.CardGame.Tests
 {
@@ -23,13 +24,13 @@ namespace Fool.CardGame.Tests
 
             game.PrepareForTheGame();
 
-            Assert.IsNotNull(game.AtatackingPlayer);
+            Assert.IsNotNull(game.AttackingPlayer);
 
-            var activePlayersLowestTrumpCard = GetPlayersLowestTrumpCard(game.AtatackingPlayer, game.Deck.TrumpCard);
+            var activePlayersLowestTrumpCard = GetPlayersLowestTrumpCard(game.AttackingPlayer, game.Deck.TrumpCard);
 
             Assert.IsNotNull(activePlayersLowestTrumpCard);
 
-            foreach (var player in game.Players.Where(p => p.Name != game.AtatackingPlayer.Name))
+            foreach (var player in game.Players.Where(p => p.Name != game.AttackingPlayer.Name))
             {
                 var playersLowestTrumpCard = GetPlayersLowestTrumpCard(player, game.Deck.TrumpCard);
 
@@ -51,31 +52,13 @@ namespace Fool.CardGame.Tests
             game.AddPlayer("Zera");
 
             game.PrepareForTheGame();
-            Assert.IsNotNull(game.AtatackingPlayer);
+            Assert.IsNotNull(game.AttackingPlayer);
             Assert.IsNotNull(game.DefendingPlayer);
 
 
-            Assert.That(game.Players.IndexOf(game.DefendingPlayer) - 1 == game.Players.IndexOf(game.AtatackingPlayer));
+            Assert.That(game.Players.IndexOf(game.DefendingPlayer) - 1 == game.Players.IndexOf(game.AttackingPlayer));
         }
 
-        //[Test]
-        public void Game_DefendingPlayerAssignmentIsCircular()
-        {
-            var game = new Game();
-
-            game.AddPlayer("Leo");
-            game.AddPlayer("Martha");
-            game.AddPlayer("Zera");
-
-            game.PrepareForTheGame();
-            while (game?.AtatackingPlayer?.Name != "Zera")
-            {
-                game?.Deck.Shuffle();
-                game?.PrepareForTheGame();
-            }
-
-            Assert.That(game?.DefendingPlayer?.Name == ("Leo"));
-        }
 
 
         [Test]
@@ -151,12 +134,12 @@ namespace Fool.CardGame.Tests
             game.Deck = new Deck(new TestDeckGenerator());
             game.Deck.Shuffle();
             game.PrepareForTheGame();
-            game.AtatackingPlayer?.FirstAttack(0);
-            game.DefendingPlayer?.Defend(0, 0);
+            game.AttackingPlayer?.FirstAttack([0]);
+            game.DefendingPlayer?.Defend(0, game.CardsOnTheTable.FirstOrDefault(c => c.DefendingCard == null).Id);
             game.FinishTheRound();
 
 
-            Assert.That(game.AtatackingPlayer!.Hand.Count, Is.EqualTo(6));
+            Assert.That(game.AttackingPlayer!.Hand.Count, Is.EqualTo(6));
             Assert.That(game.DefendingPlayer!.Hand.Count, Is.EqualTo(6));
             Assert.That(game.Deck.CardsCount, Is.EqualTo(22));
         }
@@ -174,19 +157,57 @@ namespace Fool.CardGame.Tests
             game.Deck.Shuffle();
             game.PrepareForTheGame();
 
-            var attackingPlayer = game.AtatackingPlayer;
+            var attackingPlayer = game.AttackingPlayer;
             var secondAttackingPlayer = game.Players[0];
             var defendingPlayer = game.DefendingPlayer;
 
-            attackingPlayer?.FirstAttack(0);
-            defendingPlayer.Defend(3, 0);
-            secondAttackingPlayer.Attack(1);
+            attackingPlayer?.FirstAttack([0]);
+            defendingPlayer.Defend(3, game.CardsOnTheTable.FirstOrDefault(c => c.DefendingCard == null).Id);
+            secondAttackingPlayer.Attack([1]);
 
             game.FinishTheRound();
 
-            Assert.That(game.AtatackingPlayer!.Hand.Count, Is.EqualTo(6));
+            Assert.That(game.AttackingPlayer!.Hand.Count, Is.EqualTo(6));
             Assert.That(game.DefendingPlayer!.Hand.Count, Is.EqualTo(8));
             Assert.That(game.Deck.CardsCount, Is.EqualTo(36 - 6 - 6 - 6 - 2));
+        }
+
+
+
+        [Test]
+        public void Game_PlayTwoRounds_FirstRound2AttackingCards_SecondRound2AttackingCards_SuccessfulDefence()
+        {
+            var game = new Game();
+            game.AddPlayer("Leo");
+            game.AddPlayer("Elmaz");
+
+            game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
+            {
+               "J♠,10♣,8♥,8♠,7♠,6♠",  // Player 1's cards (In the hand they will have opposite indexes)
+               "Q♠,Q♥,9♠,J♥,7♥,6♥"    // Player 2's cards
+            }));
+            
+            game.Deck.Shuffle();
+            game.PrepareForTheGame();
+
+            game.AttackingPlayer.FirstAttack([2, 3]);
+
+            var startingDefensiveCardIndex = 3;
+            foreach (var attackingCard in game.CardsOnTheTable.Where(c => c.DefendingCard == null).ToList())
+            {
+                game.DefendingPlayer.Defend(startingDefensiveCardIndex, attackingCard.Id);
+                startingDefensiveCardIndex--;
+            }
+
+            game.AttackingPlayer.Attack([3]);
+            var attackingCardIndex = game.CardsOnTheTable.FirstOrDefault(c => c.DefendingCard == null).Id;
+            game.DefendingPlayer.Defend(3, attackingCardIndex);
+
+            game.FinishTheRound();
+
+            Assert.That(game.AttackingPlayer!.Hand.Count, Is.EqualTo(6));
+            Assert.That(game.DefendingPlayer!.Hand.Count, Is.EqualTo(6));
+            Assert.That(game.Deck.CardsCount, Is.EqualTo(36 - 6 - 6 - 3 - 3));
         }
 
         private Card GetPlayersLowestTrumpCard(Player player, Card trumpCard)

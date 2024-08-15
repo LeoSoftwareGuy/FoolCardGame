@@ -9,11 +9,14 @@ namespace Fool.Core.Models.Table
         {
             AttackingCard = card;
             TrumpCard = trumpCard;
+            Id = Guid.NewGuid();
         }
 
+        public Guid Id { get; }
         public Card AttackingCard { get; }
         public Card? DefendingCard { get; private set; }
         public Card TrumpCard { get; }
+     
 
         public void Defend(Card defenceCard)
         {

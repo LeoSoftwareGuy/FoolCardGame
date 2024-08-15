@@ -5,8 +5,8 @@ C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\n
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.AssemblyInfoInputs.cache
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.AssemblyInfo.cs
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.csproj.CoreCompileInputs.cache
+C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.sourcelink.json
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.dll
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\refint\Fool.Core.dll
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.pdb
 C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\ref\Fool.Core.dll
-C:\Users\LeonidLobanov\Desktop\Personla\Personal\Fool.Core\Fool.Core\obj\Debug\net8.0\Fool.Core.sourcelink.json

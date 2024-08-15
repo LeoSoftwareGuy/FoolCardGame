@@ -37,38 +37,61 @@ namespace Fool.Core.Models
             Hand.Clear();
         }
 
-        public void FirstAttack(int cardIndex)
+        public void FirstAttack(int[] cardIndexes)
         {
-            if (cardIndex < 0 || cardIndex >= Hand.Count)
+            var attackingCards = new List<Card>();
+            foreach (var cardIndex in cardIndexes)
             {
-                throw new FoolExceptions("Card Index can be 0-5");
+                if (cardIndex < 0 || cardIndex >= Hand.Count)
+                {
+                    throw new FoolExceptions("Card Index can be 0-5");
+                }
+                attackingCards.Add(Hand[cardIndex]);
             }
-            var card = Hand[cardIndex];
-           
-            _game.FirstAttack(this, card);
-            Hand.Remove(card);
+
+            if (attackingCards.GroupBy(c => c.Rank.Value).Count() > 1)
+            {
+                throw new FoolExceptions("Multiple cards attack can only be with identical Rank cards!");
+            }
+
+            _game.FirstAttack(this, attackingCards);
+            foreach (var card in attackingCards)
+            {
+                Hand.Remove(card);
+            }
         }
 
-        public void Attack(int cardIndex)
+        public void Attack(int[] cardIndexes)
         {
-            if (cardIndex < 0 || cardIndex >= Hand.Count)
+            var attackingCards = new List<Card>();
+            foreach (var cardIndex in cardIndexes)
             {
-                throw new FoolExceptions("Card Index can be 0-5");
+                if (cardIndex < 0 || cardIndex >= Hand.Count)
+                {
+                    throw new FoolExceptions("Card Index can be 0-5");
+                }
+                attackingCards.Add(Hand[cardIndex]);
             }
-            var card = Hand[cardIndex];
-            _game.Attack(this, card);
-            Hand.Remove(card);
+            if (attackingCards.GroupBy(c => c.Rank.Value).Count() > 1)
+            {
+                throw new FoolExceptions("Multiple cards attack can only be with identical Rank cards!");
+            }
+            _game.Attack(this, attackingCards);
+            foreach (var card in attackingCards)
+            {
+                Hand.Remove(card);
+            }
         }
 
-        public void Defend(int defendingCardIndex, int attackingCardIndex)
+        public void Defend(int defendingCardIndex, Guid attackingCardId)
         {
             if (defendingCardIndex < 0 || defendingCardIndex >= Hand.Count)
             {
                 throw new FoolExceptions("Card Index can be 0-5");
             }
             var defendingCard = Hand[defendingCardIndex];
-            var cardFromTheTable = _game.CardsOnTheTable[attackingCardIndex];
-          
+            var cardFromTheTable = _game.CardsOnTheTable.FirstOrDefault(c => c.Id == attackingCardId);
+
             _game.Defend(this, defendingCard, cardFromTheTable.AttackingCard);
             Hand.Remove(defendingCard);
         }
