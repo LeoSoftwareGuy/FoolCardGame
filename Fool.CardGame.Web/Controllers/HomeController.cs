@@ -53,7 +53,8 @@ namespace Fool.CardGame.Web.Controllers
         [HttpPost]
         public void Attack(AttackingModel model)
         {
-            _tableService.Attack(model.TableId, model.PlayerSecret, model.PlayerName, model.CardId);
+            var cardIds = model.CardIds.Split(',').Select(int.Parse).ToArray();
+            _tableService.Attack(model.PlayerSecret, model.PlayerName, cardIds);
         }
 
 

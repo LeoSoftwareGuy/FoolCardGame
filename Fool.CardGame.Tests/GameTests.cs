@@ -185,8 +185,8 @@ namespace Fool.CardGame.Tests
             {
                "J♠,10♣,8♥,8♠,7♠,6♠",  // Player 1's cards (In the hand they will have opposite indexes)
                "Q♠,Q♥,9♠,J♥,7♥,6♥"    // Player 2's cards
-            }));
-            
+            }, "A♣"));
+
             game.Deck.Shuffle();
             game.PrepareForTheGame();
 
@@ -210,6 +210,41 @@ namespace Fool.CardGame.Tests
             Assert.That(game.Deck.CardsCount, Is.EqualTo(36 - 6 - 6 - 3 - 3));
         }
 
+
+        [Test]
+        public void Game_PlayOneRound_2PlayersAreAttackingDefendingPlayerTakesAllCards()
+        {
+            var game = new Game();
+            game.AddPlayer("Leo");
+            game.AddPlayer("Elmaz");
+            game.AddPlayer("Viktor");
+
+            game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
+            {
+                "A♠,Q♦,Q♣,Q♥,10♥,7♦",
+                "Q♠,A♦,A♣,A♥,10♣,10♠",
+                "J♠,J♦,J♣,J♥,9♣,9♠"
+
+            }, "6♦"));
+
+   
+            game.Deck.Shuffle();
+            game.PrepareForTheGame();
+
+            var firstAttackingPlayer = game.AttackingPlayer;
+            var defendingPlayer = game.DefendingPlayer;
+            var secondAttackingPlayer = game.Players[1];
+
+            firstAttackingPlayer.FirstAttack([5]);
+            secondAttackingPlayer.Attack([2, 3, 4]);
+
+            game.FinishTheRound();
+
+            Assert.That(firstAttackingPlayer.Hand.Count, Is.EqualTo(6));
+            Assert.That(secondAttackingPlayer.Hand.Count, Is.EqualTo(6));
+            Assert.That(defendingPlayer.Hand.Count, Is.EqualTo(6 + 4));
+            Assert.That(game.Deck.CardsCount, Is.EqualTo(36 - 6 * 3 - 4));
+        }
         private Card GetPlayersLowestTrumpCard(Player player, Card trumpCard)
         {
             if (player == null || trumpCard == null)

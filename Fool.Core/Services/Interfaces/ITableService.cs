@@ -7,7 +7,7 @@ namespace Fool.Core.Services.Interfaces
         Dictionary<Guid, Table> TablesWithGames { get; }
         Guid CreateTable();
         void SitToTheTable(string playerSecret, string playerNamer, Guid tableId);
-        void Attack(Guid tableId, string playerSecret, string playerName, int cardId);
+        void Attack(string playerSecret, string playerName, int[] cardIds);
         dynamic GetStatus(string playerSecret);
     }
 }

@@ -78,12 +78,24 @@ namespace Fool.Core.Services
             return result;
         }
 
-        public void Attack(Guid tableId, string playerSecret, string playerName, int cardId)
+        public void Attack(string playerSecret, string playerName, int[] cardIds)
         {
             var playerTable = FindTableWhereUserIsPlaying(playerSecret);
             var player = playerTable == null ? null : playerTable.PlayersAndTheirSecretKeys[playerSecret];
 
-            player.FirstAttack([cardId]);
+            if (playerTable == null || player == null)
+            {
+                throw new FoolExceptions("Player or player table is not found");
+            }
+
+            if (playerTable.Game.RoundStarted)
+            {
+                player.Attack(cardIds);
+            }
+            else
+            {
+                player.FirstAttack(cardIds);
+            }
         }
 
         private bool CheckIfPlayerIsAlreadyPlayingOnAnotherTable(string playerSecret)

@@ -12,6 +12,7 @@ namespace Fool.Core.Models
             Deck = new Deck(new CardDeckGenerator());
             Players = new List<Player>();
             CardsOnTheTable = new List<TableCard>();
+            RoundStarted = false;
 
             Deck.Shuffle();
         }
@@ -19,6 +20,7 @@ namespace Fool.Core.Models
         public List<Player> Players { get; }
 
         public List<TableCard> CardsOnTheTable { get; private set; }
+        public bool RoundStarted { get; private set; }
 
 
         public Player? AttackingPlayer
@@ -93,16 +95,24 @@ namespace Fool.Core.Models
             }
 
             DrawMissingCardsAfterRound();
-
+            RoundStarted = false;
             // need to change attacking player, defending player becomes attackign player
         }
 
         internal void FirstAttack(Player player, List<Card> cards)
         {
+            if (RoundStarted)
+            {
+                throw new FoolExceptions("Round has already started, use Attack method instead!");
+            }
+
             if (_attackingPlayer != player)
             {
                 throw new FoolExceptions($"Player:{player.Name} cant attack as its player:{_attackingPlayer?.Name} turn");
             }
+
+            RoundStarted = true;
+
             if (cards.Count > 0)
             {
                 foreach (var card in cards)
@@ -115,6 +125,12 @@ namespace Fool.Core.Models
 
         internal void Attack(Player player, List<Card> cards)
         {
+            //TODO add lock to prevent parallel calls
+            if (RoundStarted == false)
+            {
+                throw new FoolExceptions("Round has not started, use FirstAttack method instead!");
+            }
+
             if (DefendingPlayer == player)
             {
                 throw new FoolExceptions($"Player:{player.Name} cant attack as he is defending");
@@ -138,6 +154,11 @@ namespace Fool.Core.Models
 
         internal void Defend(Player player, Card defendingCard, Card attackingCard)
         {
+            if (RoundStarted == false)
+            {
+                throw new FoolExceptions("Round has not started, there is nothing to defend against!");
+            }
+
             if (DefendingPlayer != player)
             {
                 throw new FoolExceptions($"Player:{player.Name} cant defend, as defending player is {DefendingPlayer?.Name}");

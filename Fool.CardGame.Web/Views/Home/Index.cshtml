@@ -162,6 +162,10 @@
                 if (status.table == null) {
                     // we need to draw available tables for the user to sit at
                 } else {
+                    // clear hand, deck and trump cards to refresh the state
+                    document.getElementById('playingCards').innerHTML = '';
+                    document.getElementById('deck').innerHTML = '';
+
                     for (let cardIndex = 0; cardIndex < status.table.playerHand.length; cardIndex++) {
                         let card = status.table.playerHand[cardIndex];
                         let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
@@ -205,9 +209,9 @@
         });
     }
 
-    function checkMoves(){
+    function checkMoves() {
         let selectedCard = document.querySelectorAll('.playingCard.active');
-        if (selectedCard.length > 0){
+        if (selectedCard.length > 0) {
             document.getElementById('makeMoveBtn').classList.remove('hidden');
         } else {
             document.getElementById('makeMoveBtn').classList.add('hidden');
@@ -216,13 +220,21 @@
 
     function makeAMove() {
         let selectedCards = document.querySelectorAll('.playingCard.active');
-        //let cardIndex = Array.from(document.getElementById('playingCards').children).indexOf(selectedCard[0]);
+        let cardIndexes = [];
+        debugger;
         if (selectedCards.length > 0) {
-          let url = `/Home/Attack?tableId=${encodeURIComponent(gameStatus.tableId)}&playerSecret=${encodeURIComponent(user.secret)}&playerName=${encodeURIComponent(user.name)}&cardId=1`;
+            let cards = document.querySelectorAll('#playingCards .playingCard');
+            for (let i = 0; i < cards.length; i++) {
+                if (cards[i].classList.contains('active')) {
+                    cardIndexes.push(i);
+                }
+            }
+            let encodedCardIds = cardIndexes.map(id => encodeURIComponent(id)).join(',');
+            let url = `/Home/Attack?playerSecret=${encodeURIComponent(user.secret)}&playerName=${encodeURIComponent(user.name)}&cardIds=${[encodedCardIds]}`;
             SendRequest({
                 method: 'POST',
                 url: url,
-                body: {}, 
+                body: {},
                 success: function (data) {
                     getStatus();
                 },
@@ -231,8 +243,6 @@
                 }
             });
         }
-        
-       
     }
 
     function getRank(value, suitChar) {
@@ -276,7 +286,7 @@
     }
 
     #deck {
-        margin-top:5rem;
+        margin-top: 5rem;
         position: relative;
     }
 
@@ -289,7 +299,7 @@
         width: 100%;
         display: flex;
         flex-direction: column;
-        align-items: center;  
+        align-items: center;
     }
 
     #playingCards {
@@ -308,13 +318,13 @@
         border-radius: .25rem;
     }
 
-    .playingCard.active {
+        .playingCard.active {
             width: 3.5rem; /* Increase width */
             height: 7rem; /* Increase height */
             border-color: rgba(0,0,0,.5); /* Darker border */
             background-color: #f0f0f0; /* Slightly different background color */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add shadow */
-    }
+        }
 
     .playingCard-info {
         margin-left: .2rem;
@@ -351,8 +361,8 @@
     }
 
     .deck-card__number {
-        margin:auto;
-        width:100%;
+        margin: auto;
+        width: 100%;
         color: white;
         font-weight: 500;
         font-size: 1.2rem;
