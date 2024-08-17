@@ -1,4 +1,5 @@
-﻿using Fool.Core.Exceptions;
+﻿using Fool.CardGame.Web.Models;
+using Fool.Core.Exceptions;
 using Fool.Core.Models;
 using Fool.Core.Models.Table;
 using Fool.Core.Services.Interfaces;
@@ -49,37 +50,44 @@ namespace Fool.Core.Services
 
 
 
-        // If Player has a table, return the table id, his hand, deck count and trump card
-        // If Player does not have a table, return all table ids
-        public dynamic GetStatus(string playerSecret)
+        public GetStatusModel GetStatus(string playerSecret)
         {
             var playerTable = FindTableWhereUserIsPlaying(playerSecret);
             var player = playerTable == null ? null : playerTable.PlayersAndTheirSecretKeys[playerSecret];
 
-            var result = new
+            if (playerTable == null && player == null)
             {
-                Table = playerTable == null ? null : new
+                return new GetStatusModel
                 {
-                    TableId = playerTable.Id,
-                    PlayerHand = player.Hand.Select(c => new { Rank = c.Rank.Value, Suit = c.Suit.IconChar }),
-                    DeckCardsCount = playerTable.Game.Deck.CardsCount,
-                    Trump = new
-                    {
-                        Rank = playerTable.Game.Deck.TrumpCard.Rank.Value,
-                        Suit = playerTable.Game.Deck.TrumpCard.Suit.IconChar
-                    }
-                },
-                Tables = playerTable != null ? null : TablesWithGames.Select(t => new
-                {
-                    Id = t.Value.Id
-                }),
-            };
+                    Table = null,
+                    Tables = TablesWithGames.Select(t => new GetStatusModel.TableModel { Id = t.Value.Id }).ToArray()
+                };
 
-            return result;
+            }
+            else
+            {
+                return new GetStatusModel
+                {
+                    Table = new GetStatusModel.TableModel
+                    {
+                        Id = playerTable!.Id,
+                        PlayerHand = player!.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
+                        DeckCardsCount = playerTable.Game.Deck.CardsCount,
+                        Trump = new GetStatusModel.CardModel(playerTable.Game.Deck.TrumpCard),
+                        CardsOnTheTable = playerTable.Game.CardsOnTheTable.Select(c => new GetStatusModel.TableCardModel(c)).ToArray()
+                    },
+                    Tables = null
+                };
+            }
         }
 
         public void Attack(string playerSecret, string playerName, int[] cardIds)
         {
+            if (cardIds.Length == 0)
+            {
+                throw new FoolExceptions("You cant Attack without providing card ids");
+            }
+
             var playerTable = FindTableWhereUserIsPlaying(playerSecret);
             var player = playerTable == null ? null : playerTable.PlayersAndTheirSecretKeys[playerSecret];
 

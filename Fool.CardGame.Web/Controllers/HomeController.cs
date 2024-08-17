@@ -35,7 +35,7 @@ namespace Fool.CardGame.Web.Controllers
         }
 
         [HttpPost]
-        public void JoinTable(JoinTableModel model)
+        public void JoinTable([FromBody]JoinTableModel model)
         {
             _tableService.SitToTheTable(model.PlayerSecret, model.PlayerName, model.TableGuid);
         }
@@ -51,10 +51,9 @@ namespace Fool.CardGame.Web.Controllers
 
 
         [HttpPost]
-        public void Attack(AttackingModel model)
+        public void Attack([FromBody]AttackingModel model)
         {
-            var cardIds = model.CardIds.Split(',').Select(int.Parse).ToArray();
-            _tableService.Attack(model.PlayerSecret, model.PlayerName, cardIds);
+            _tableService.Attack(model.PlayerSecret, model.PlayerName, model.CardIds);
         }
 
 

@@ -111,8 +111,6 @@ namespace Fool.Core.Models
                 throw new FoolExceptions($"Player:{player.Name} cant attack as its player:{_attackingPlayer?.Name} turn");
             }
 
-            RoundStarted = true;
-
             if (cards.Count > 0)
             {
                 foreach (var card in cards)
@@ -121,6 +119,7 @@ namespace Fool.Core.Models
                     CardsOnTheTable.Add(tableCard);
                 }
             }
+            RoundStarted = true;
         }
 
         internal void Attack(Player player, List<Card> cards)

@@ -39,9 +39,10 @@
     var gameStatus = null;
     var authCookieName = 'auth_cookie';
     var authCookieSecret = 'auth_secret';
-    init(); // perhaps dont need it here
+    init(); 
 
     function init() {
+        debugger;
         let cookieName = getCookie(authCookieName);
         let cookieSecret = getCookie(authCookieSecret);
 
@@ -71,6 +72,7 @@
 
     // You create 2 cookies when you login
     function login() {
+        debugger;
         let name = document.getElementById('nameInput').value;
         let secret = generateGuid();
 
@@ -81,6 +83,7 @@
 
     // You delete 2 cookies when you logout
     function logout() {
+        debugger;
         deleteCookie(authCookieName);
         deleteCookie(authCookieSecret);
         init();
@@ -136,11 +139,13 @@
 
     // passing params as if its GET method, bad approach but for some reason POST does not work.
     function sitToTheTable(tableId) {
-        let url = `/Home/JoinTable?playerSecret=${encodeURIComponent(user.secret)}&playerName=${encodeURIComponent(user.name)}&tableGuid=${encodeURIComponent(tableId)}`;
         SendRequest({
             method: 'POST',
-            url: url,
+            url: '/Home/JoinTable',
             body: {
+                playerSecret: user.secret,
+                playerName: user.name,
+                tableGuid: tableId
             },
             success: function (data) {
                 getStatus()
@@ -157,15 +162,16 @@
             method: 'GET',
             url: '/Home/GetStatus?playerSecret=' + user.secret,
             success: function (data) {
+                debugger;
                 let status = JSON.parse(data.responseText);
                 gameStatus = status;
+                // clear hand, deck and trump cards to refresh the state
+                document.getElementById('playingCards').innerHTML = '';
+                document.getElementById('deck').innerHTML = '';
                 if (status.table == null) {
                     // we need to draw available tables for the user to sit at
                 } else {
-                    // clear hand, deck and trump cards to refresh the state
-                    document.getElementById('playingCards').innerHTML = '';
-                    document.getElementById('deck').innerHTML = '';
-
+                    debugger;
                     for (let cardIndex = 0; cardIndex < status.table.playerHand.length; cardIndex++) {
                         let card = status.table.playerHand[cardIndex];
                         let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
@@ -204,7 +210,7 @@
                 }
             },
             error: function (data) {
-                alert("Something went wrong during creating of table")
+                alert("Something went wrong during creation of table")
             }
         });
     }
@@ -221,7 +227,6 @@
     function makeAMove() {
         let selectedCards = document.querySelectorAll('.playingCard.active');
         let cardIndexes = [];
-        debugger;
         if (selectedCards.length > 0) {
             let cards = document.querySelectorAll('#playingCards .playingCard');
             for (let i = 0; i < cards.length; i++) {
@@ -229,12 +234,14 @@
                     cardIndexes.push(i);
                 }
             }
-            let encodedCardIds = cardIndexes.map(id => encodeURIComponent(id)).join(',');
-            let url = `/Home/Attack?playerSecret=${encodeURIComponent(user.secret)}&playerName=${encodeURIComponent(user.name)}&cardIds=${[encodedCardIds]}`;
             SendRequest({
                 method: 'POST',
-                url: url,
-                body: {},
+                url: '/Home/Attack',
+                body: {
+                    playerSecret: user.secret,
+                    playerName: user.name,
+                    cardIds: cardIndexes
+                },
                 success: function (data) {
                     getStatus();
                 },

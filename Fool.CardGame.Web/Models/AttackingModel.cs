@@ -9,6 +9,6 @@ namespace Fool.CardGame.Web.Models
         public string PlayerName { get; set; }
 
         [FromQuery(Name = "cardIds")]
-        public string CardIds { get; set; }
+        public int[] CardIds { get; set; }
     }
 }

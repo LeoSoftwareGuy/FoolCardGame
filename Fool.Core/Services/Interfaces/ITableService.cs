@@ -1,4 +1,5 @@
 ﻿using Fool.Core.Models.Table;
+using Fool.CardGame.Web.Models;
 
 namespace Fool.Core.Services.Interfaces
 {
@@ -8,6 +9,6 @@ namespace Fool.Core.Services.Interfaces
         Guid CreateTable();
         void SitToTheTable(string playerSecret, string playerNamer, Guid tableId);
         void Attack(string playerSecret, string playerName, int[] cardIds);
-        dynamic GetStatus(string playerSecret);
+        GetStatusModel GetStatus(string playerSecret);
     }
 }
