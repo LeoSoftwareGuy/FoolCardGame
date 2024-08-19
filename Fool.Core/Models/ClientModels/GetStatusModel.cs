@@ -15,6 +15,7 @@ namespace Fool.CardGame.Web.Models
             public CardModel[]? PlayerHand { get; set; }
             public CardModel? Trump { get; set; }
             public TableCardModel[]? CardsOnTheTable { get; set; }
+            public PlayerModel[]? Players { get; set; }
         }
 
         public class CardModel
@@ -33,11 +34,18 @@ namespace Fool.CardGame.Web.Models
             public TableCardModel(TableCard businessTableCard)
             {
                 AttackingCard = new CardModel(businessTableCard.AttackingCard);
-                DefendingCard = businessTableCard.DefendingCard == null ? null 
+                DefendingCard = businessTableCard.DefendingCard == null ? null
                                                                         : new CardModel(businessTableCard.DefendingCard);
             }
             public CardModel AttackingCard { get; set; }
             public CardModel? DefendingCard { get; set; }
         }
+
+        public class PlayerModel
+        {
+            public string Name { get; set; }
+            public int CardsCount { get; set; }
+        }
+
     }
 }

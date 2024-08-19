@@ -74,7 +74,8 @@ namespace Fool.Core.Services
                         PlayerHand = player!.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
                         DeckCardsCount = playerTable.Game.Deck.CardsCount,
                         Trump = new GetStatusModel.CardModel(playerTable.Game.Deck.TrumpCard),
-                        CardsOnTheTable = playerTable.Game.CardsOnTheTable.Select(c => new GetStatusModel.TableCardModel(c)).ToArray()
+                        CardsOnTheTable = playerTable.Game.CardsOnTheTable.Select(c => new GetStatusModel.TableCardModel(c)).ToArray(),
+                        Players = playerTable.Game.Players.Select(c => new GetStatusModel.PlayerModel { Name = c.Name, CardsCount = c.Hand.Count }).ToArray()
                     },
                     Tables = null
                 };

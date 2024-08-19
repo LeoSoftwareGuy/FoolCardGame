@@ -1,36 +1,48 @@
-﻿<label id="nameLabel"></label>
+﻿
 <div id="loginBlock">
     <input type="text" id="nameInput" placeholder="Name" />
     <button class="btn btn-info" onclick="login()">Lets Play</button>
 </div>
-<button class="btn btn-danger" id="logoutBtn" onclick="logout()">Logout</button>
+
+<div id="logoutBlock">
+    <div>
+        <label id="nameLabel"></label>
+        <button class="btn btn-danger" id="logoutBtn" onclick="logout()">Logout</button>
+    </div>
+    <button class="btn btn-success createTableBtn" onclick="createTable()">Create Table</button>
+</div>
+
+
+<div id="tablesContainer">
+    <div id="tables">
+    </div>
+</div>
 
 
 <div id="main" class="hidden">
-    <button class="btn btn-success createTableBtn" onclick="createTable()">Create Table</button>
-
     <div id="playingCardsContainer">
-        <div id="playingCards">
-        </div>
-        <button id="makeMoveBtn" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
+        <div id="playingCards" />
+        <button id="play__btn" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
     </div>
-
-    <div id="table">
-        <div id="deck"></div>
-        <div id="field"></div>
-    </div>
+    <div id="field"></div>
+    <div id="deck"></div>
+    <div id="players"></div>
 </div>
 
 
 <div class="hidden">
     <div class="playingCard">
-        <div class="playingCard-info">
-            <label class="playingCard-info__rank">6</label>
-            <label class="playingCard-info__suit">♦</label>
+        <div class="playingCard__info">
+            <label class="playingCard_info_rank">6</label>
+            <label class="playingCard_info_suit">♦</label>
         </div>
     </div>
-    <div class="deck-card__shirt">
-        <label class="deck-card__number"></label>
+    <div class="deck_card_shirt">
+        <label class="deck_card_number"></label>
+    </div>
+    <div class="playingTable" />
+    <div class="player">
+        <img src="https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/man-person-icon.png" />
     </div>
 </div>
 
@@ -39,25 +51,22 @@
     var gameStatus = null;
     var authCookieName = 'auth_cookie';
     var authCookieSecret = 'auth_secret';
-    init(); 
+    init();
 
     function init() {
-        debugger;
         let cookieName = getCookie(authCookieName);
         let cookieSecret = getCookie(authCookieSecret);
 
         if (cookieName == null || cookieSecret == null) {
             document.getElementById('main').classList.add('hidden');
-            document.getElementById('nameLabel').classList.add('hidden');
-            document.getElementById('logoutBtn').classList.add('hidden');
+            document.getElementById('logoutBlock').classList.add('hidden');
             document.getElementById('loginBlock').classList.remove('hidden');
 
         } else {
             user.name = cookieName;
             user.secret = cookieSecret;
             document.getElementById('loginBlock').classList.add('hidden');
-            document.getElementById('nameLabel').classList.remove('hidden');
-            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('logoutBlock').classList.remove('hidden');
             document.getElementById('main').classList.remove('hidden');
             getStatus();
         }
@@ -72,7 +81,6 @@
 
     // You create 2 cookies when you login
     function login() {
-        debugger;
         let name = document.getElementById('nameInput').value;
         let secret = generateGuid();
 
@@ -83,7 +91,6 @@
 
     // You delete 2 cookies when you logout
     function logout() {
-        debugger;
         deleteCookie(authCookieName);
         deleteCookie(authCookieSecret);
         init();
@@ -162,16 +169,32 @@
             method: 'GET',
             url: '/Home/GetStatus?playerSecret=' + user.secret,
             success: function (data) {
-                debugger;
                 let status = JSON.parse(data.responseText);
                 gameStatus = status;
+                debugger;
                 // clear hand, deck and trump cards to refresh the state
                 document.getElementById('playingCards').innerHTML = '';
                 document.getElementById('deck').innerHTML = '';
+                document.getElementById('field').innerHTML = '';
+                document.getElementById('tables').innerHTML = '';
+
                 if (status.table == null) {
                     // we need to draw available tables for the user to sit at
+                    for (let i = 0; i < status.tables.length; i++) {
+                        let table = status.tables[i];
+                        let tableDiv = document.getElementsByClassName('playingTable')[0].cloneNode(true);
+
+                        tableDiv.addEventListener('click', function (event) {
+                            if (this.classList.contains('active')) {
+                                this.classList.remove('active');
+                            } else {
+                                this.classList.add('active');
+                            }
+                            // checkMoves();
+                        });
+                        document.getElementById('tables').appendChild(tableDiv);
+                    }
                 } else {
-                    debugger;
                     for (let cardIndex = 0; cardIndex < status.table.playerHand.length; cardIndex++) {
                         let card = status.table.playerHand[cardIndex];
                         let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
@@ -187,8 +210,8 @@
                             checkMoves();
                         });
 
-                        cardDiv.getElementsByClassName('playingCard-info__rank')[0].innerHTML = getRank(card.rank, card.suit);
-                        cardDiv.getElementsByClassName('playingCard-info__suit')[0].innerHTML = getSuit(card.suit);
+                        cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(card.rank, card.suit);
+                        cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(card.suit);
 
                         document.getElementById('playingCards').appendChild(cardDiv);
                     }
@@ -197,15 +220,33 @@
                         let trumpCard = status.table.trump;
                         let trumpCardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
 
-                        trumpCardDiv.getElementsByClassName('playingCard-info__rank')[0].innerHTML = getRank(trumpCard.rank);
-                        trumpCardDiv.getElementsByClassName('playingCard-info__suit')[0].innerHTML = getSuit(trumpCard.suit);
+                        trumpCardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(trumpCard.rank);
+                        trumpCardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(trumpCard.suit);
                         document.getElementById('deck').appendChild(trumpCardDiv);
                     }
 
                     if (status.table.deckCardsCount > 1) {
-                        let cardDiv = document.getElementsByClassName('deck-card__shirt')[0].cloneNode(true);
-                        cardDiv.getElementsByClassName('deck-card__number')[0].innerHTML = status.table.deckCardsCount;
+                        let cardDiv = document.getElementsByClassName('deck_card_shirt')[0].cloneNode(true);
+                        cardDiv.getElementsByClassName('deck_card_number')[0].innerHTML = status.table.deckCardsCount;
                         document.getElementById('deck').appendChild(cardDiv);
+                    }
+
+                    for (let i = 0; i < status.table.cardsOnTheTable.length; i++) {
+                        let attackingCard = status.table.cardsOnTheTable[i].attackingCard;
+                        let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
+
+                        debugger;
+                        cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(attackingCard.rank, attackingCard.suit);
+                        cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(attackingCard.suit);
+
+                        // here should put another on it as defending
+                        document.getElementById('field').appendChild(cardDiv);
+                    }
+
+
+                    for (let i = 0; i < status.table.players.length; i++) {
+                        let playerDiv = document.getElementsByClassName('player')[0].cloneNode(true);   
+                        document.getElementById('players').appendChild(playerDiv);
                     }
                 }
             },
@@ -218,9 +259,9 @@
     function checkMoves() {
         let selectedCard = document.querySelectorAll('.playingCard.active');
         if (selectedCard.length > 0) {
-            document.getElementById('makeMoveBtn').classList.remove('hidden');
+            document.getElementById('play__btn').classList.remove('hidden');
         } else {
-            document.getElementById('makeMoveBtn').classList.add('hidden');
+            document.getElementById('play__btn').classList.add('hidden');
         }
     }
 
@@ -277,6 +318,23 @@
         display: none !important;
     }
 
+    #logoutBlock {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #tablesContainer {
+        margin-top: 4rem;
+    }
+
+    #tables {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 1rem;
+    }
+
+
     #main {
         margin-top: 1rem;
         width: 100%;
@@ -285,19 +343,39 @@
     .createTableBtn {
     }
 
-    #table {
-        margin-top: 1rem;
+    .playingTable {
+        min-height: 10rem;
+        min-width: 10rem;
+        border: 1px solid rgba(0,0,0,.125);
+        background-color: #fff;
+        border-radius: 5rem;
+    }
+
+        .playingTable.active {
+            border-color: rgba(0,0,0,.5); /* Darker border */
+            background-color: #f0f0f0; /* Slightly different background color */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add shadow */
+        }
+
+    #field {
+        margin-top: 4rem;
+        width: 100%;
         display: flex;
-        justify-content: center;
         align-items: center;
+        column-gap: 1.5rem;
+        flex-wrap: wrap;
     }
 
     #deck {
-        margin-top: 5rem;
+        margin-top: 6rem;
+        width: 100%;
+        display: flex;
         position: relative;
+        align-items: center;
+        justify-content: center;
     }
 
-    #makeMoveBtn {
+    #play__btn {
         margin-top: 1rem;
     }
 
@@ -333,7 +411,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add shadow */
         }
 
-    .playingCard-info {
+    .playingCard__info {
         margin-left: .2rem;
         width: 100%;
         max-height: 1rem;
@@ -342,13 +420,13 @@
         column-gap: .01rem;
     }
 
-    .playingCard-info__rank {
+    .playingCard_info_rank {
         display: block;
         font-size: 1.0rem;
         font-weight: 500;
     }
 
-    .playingCard-info__suit {
+    .playingCard_info_suit {
         display: block;
         font-size: 3.2rem;
         font-weight: 500;
@@ -356,10 +434,11 @@
 
 
 
-    .deck-card__shirt {
+    .deck_card_shirt {
         position: absolute;
-        bottom: -18px;
-        left: -30px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         width: 6rem;
         height: 3rem;
         border: 1px solid rgba(0,0,0,.125);
@@ -367,7 +446,7 @@
         border-radius: .25rem;
     }
 
-    .deck-card__number {
+    .deck_card_number {
         margin: auto;
         width: 100%;
         color: white;
