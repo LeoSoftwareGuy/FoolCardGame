@@ -76,6 +76,7 @@ namespace Fool.Core.Services
                     {
                         Id = playerTable!.Id,
                         MyIndex = playerTable.Game.Players.IndexOf(player!),
+                        ActivePlayerIndex = playerTable.Game.Players.IndexOf(playerTable.Game.AttackingPlayer!),
                         PlayerHand = player!.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
                         DeckCardsCount = playerTable.Game.Deck.CardsCount,
                         Trump = new GetStatusModel.CardModel(playerTable.Game.Deck.TrumpCard),

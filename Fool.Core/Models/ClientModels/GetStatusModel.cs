@@ -17,6 +17,7 @@ namespace Fool.CardGame.Web.Models
             public TableCardModel[]? CardsOnTheTable { get; set; }
             public PlayerModel[]? Players { get; set; }
             public int MyIndex { get; set; }
+            public int ActivePlayerIndex { get; set; }
         }
 
         public class CardModel

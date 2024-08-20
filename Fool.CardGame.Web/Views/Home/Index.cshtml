@@ -187,6 +187,7 @@
                     for (let i = 0; i < status.tables.length; i++) {
                         let table = status.tables[i];
                         let tableDiv = document.getElementsByClassName('playingTable')[0].cloneNode(true);
+                        tableDiv.innerHTML = '';
 
                         tableDiv.addEventListener('click', function (event) {
                             if (this.classList.contains('active')) {
@@ -238,6 +239,7 @@
                     for (let i = 0; i < status.table.cardsOnTheTable.length; i++) {
                         let attackingCard = status.table.cardsOnTheTable[i].attackingCard;
                         let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
+                        cardDiv.innerHTML = '';
 
                         cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(attackingCard.rank, attackingCard.suit);
                         cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(attackingCard.suit);
@@ -245,7 +247,6 @@
                         // here should put another on it as defending
                         document.getElementById('field').appendChild(cardDiv);
                     }
-                    debugger;
 
                     drawPlayersAndTheirHands(status);
                 }
@@ -259,17 +260,16 @@
     // We need to draw people clock wise
     // If our index is 3 then 2 1 3 5 4
     function drawPlayersAndTheirHands(status) {
-        debugger;
         let playerIndexes = [];
         for (let i = status.table.myIndex - 1; i >= 0; i--) {
-            playerIndexes.push(i);
+            playerIndexes.push({index:i, gameIndex:i});
         }
         for (let i = status.table.players.length - 1; i >= status.table.myIndex; i--) {
-            playerIndexes.push(i);
+            playerIndexes.push({ index: i, gameIndex: i + 1});
         }
 
         for (let i = 0; i < playerIndexes.length; i++) {
-            let playerIndex = playerIndexes[i];
+            let playerIndex = playerIndexes[i].index;
             let player = status.table.players[playerIndex];
             let playerDiv = document.getElementsByClassName('player')[0].cloneNode(true);
             playerDiv.getElementsByClassName('player__name')[0].innerHTML = player.name;
@@ -278,6 +278,10 @@
             let playerCardsDiv = playerDiv.getElementsByClassName('player__cards')[0];
             playerCardsDiv.innerHTML = ''; // Clear any previous cards
 
+            if (playerIndex.gameIndex == status.table.activePlayerIndex) {
+                debugger;
+                playerDiv.classList.add('active');
+            }
             document.getElementById('players').appendChild(playerDiv);
 
             for (let j = 0; j < player.cardsCount; j++) {
@@ -497,7 +501,7 @@
     }
 
     .player {
-        margin-left: 6rem;
+        margin-left: 4rem;
         display: inline-block;
     }
 
@@ -535,5 +539,9 @@
         .player__card:last-child {
             width: 1.4rem;
         }
+
+    .player.active .player__img {
+        border:2px solid blue;
+    }
 
 </style>
