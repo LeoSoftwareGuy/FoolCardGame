@@ -21,7 +21,7 @@
 
 <div id="main" class="hidden">
     <div id="playingCardsContainer">
-        <div id="playingCards" />
+        <div id="playingCards"></div>
         <button id="play__btn" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
     </div>
     <div id="field"></div>
@@ -40,9 +40,13 @@
     <div class="deck_card_shirt">
         <label class="deck_card_number"></label>
     </div>
-    <div class="playingTable" />
+    <div class="playingTable"></div>
     <div class="player">
-        <img src="https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/man-person-icon.png" />
+        <img class="player__img" src="/images/player.png" />
+        <label class="player__name"></label>
+        <div class="player__cards">
+            <div class="player__card"></div>
+        </div>
     </div>
 </div>
 
@@ -171,12 +175,12 @@
             success: function (data) {
                 let status = JSON.parse(data.responseText);
                 gameStatus = status;
-                debugger;
                 // clear hand, deck and trump cards to refresh the state
                 document.getElementById('playingCards').innerHTML = '';
                 document.getElementById('deck').innerHTML = '';
                 document.getElementById('field').innerHTML = '';
                 document.getElementById('tables').innerHTML = '';
+                document.getElementById('players').innerHTML = '';
 
                 if (status.table == null) {
                     // we need to draw available tables for the user to sit at
@@ -235,19 +239,15 @@
                         let attackingCard = status.table.cardsOnTheTable[i].attackingCard;
                         let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
 
-                        debugger;
                         cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(attackingCard.rank, attackingCard.suit);
                         cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(attackingCard.suit);
 
                         // here should put another on it as defending
                         document.getElementById('field').appendChild(cardDiv);
                     }
+                    debugger;
 
-
-                    for (let i = 0; i < status.table.players.length; i++) {
-                        let playerDiv = document.getElementsByClassName('player')[0].cloneNode(true);   
-                        document.getElementById('players').appendChild(playerDiv);
-                    }
+                    drawPlayersAndTheirHands(status);
                 }
             },
             error: function (data) {
@@ -256,7 +256,40 @@
         });
     }
 
+    // We need to draw people clock wise
+    // If our index is 3 then 2 1 3 5 4
+    function drawPlayersAndTheirHands(status) {
+        debugger;
+        let playerIndexes = [];
+        for (let i = status.table.myIndex - 1; i >= 0; i--) {
+            playerIndexes.push(i);
+        }
+        for (let i = status.table.players.length - 1; i >= status.table.myIndex; i--) {
+            playerIndexes.push(i);
+        }
+
+        for (let i = 0; i < playerIndexes.length; i++) {
+            let playerIndex = playerIndexes[i];
+            let player = status.table.players[playerIndex];
+            let playerDiv = document.getElementsByClassName('player')[0].cloneNode(true);
+            playerDiv.getElementsByClassName('player__name')[0].innerHTML = player.name;
+            playerDiv.getElementsByClassName('player__name')[0].title = player.name;
+            // Clear any previous cards in this playerDiv
+            let playerCardsDiv = playerDiv.getElementsByClassName('player__cards')[0];
+            playerCardsDiv.innerHTML = ''; // Clear any previous cards
+
+            document.getElementById('players').appendChild(playerDiv);
+
+            for (let j = 0; j < player.cardsCount; j++) {
+                let cardDiv = document.getElementsByClassName('player__card')[0].cloneNode(true);
+                playerCardsDiv.appendChild(cardDiv);
+            }
+        }
+    }
+
+
     function checkMoves() {
+        debugger;
         let selectedCard = document.querySelectorAll('.playingCard.active');
         if (selectedCard.length > 0) {
             document.getElementById('play__btn').classList.remove('hidden');
@@ -314,6 +347,8 @@
 </script>
 <style>
     /* CSS for the hidden class */
+
+
     .hidden {
         display: none !important;
     }
@@ -367,7 +402,7 @@
     }
 
     #deck {
-        margin-top: 6rem;
+        margin-top: 4rem;
         width: 100%;
         display: flex;
         position: relative;
@@ -454,5 +489,51 @@
         font-size: 1.2rem;
         text-align: center;
     }
+
+
+    #players {
+        margin: 3rem 0 2rem 0;
+        text-align: center;
+    }
+
+    .player {
+        margin-left: 6rem;
+        display: inline-block;
+    }
+
+    .player__img {
+        margin: auto;
+        width: 64px;
+        height: 64px;
+    }
+
+    .player__name {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        max-width: 100px;
+        text-overflow: clip;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .player__cards {
+        margin-top: 0.5rem;
+        display: flex;
+    }
+
+    .player__card {
+        margin-left: -.2rem;
+        display: inline-block;
+        width: 0.7rem;
+        height: 3rem;
+        border: 1px solid rgba(0,0,0,.125);
+        background: repeating-linear-gradient( 45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px);
+        border-radius: .25rem;
+    }
+
+        .player__card:last-child {
+            width: 1.4rem;
+        }
 
 </style>

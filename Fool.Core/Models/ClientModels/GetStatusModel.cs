@@ -16,6 +16,7 @@ namespace Fool.CardGame.Web.Models
             public CardModel? Trump { get; set; }
             public TableCardModel[]? CardsOnTheTable { get; set; }
             public PlayerModel[]? Players { get; set; }
+            public int MyIndex { get; set; }
         }
 
         public class CardModel
@@ -43,6 +44,7 @@ namespace Fool.CardGame.Web.Models
 
         public class PlayerModel
         {
+            public int Index { get; set; }
             public string Name { get; set; }
             public int CardsCount { get; set; }
         }

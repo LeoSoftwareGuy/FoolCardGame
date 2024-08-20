@@ -38,7 +38,11 @@ namespace Fool.Core.Services
                 var debug = true;
                 if (debug)
                 {
-                    table.Game.AddPlayer("Elmaz");
+                    table.Game.AddPlayer("1 Elmaz");
+                    table.Game.AddPlayer("2 Lets Check This Long Name Out");
+                    table.Game.AddPlayer("3 Bob");
+                    table.Game.AddPlayer("4 WhatIfThisNameIsEvenLongerThenPreviousName");
+                    table.Game.AddPlayer("5 Vincent");
                     table.Game.PrepareForTheGame();
                 }
             }
@@ -71,11 +75,14 @@ namespace Fool.Core.Services
                     Table = new GetStatusModel.TableModel
                     {
                         Id = playerTable!.Id,
+                        MyIndex = playerTable.Game.Players.IndexOf(player!),
                         PlayerHand = player!.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
                         DeckCardsCount = playerTable.Game.Deck.CardsCount,
                         Trump = new GetStatusModel.CardModel(playerTable.Game.Deck.TrumpCard),
                         CardsOnTheTable = playerTable.Game.CardsOnTheTable.Select(c => new GetStatusModel.TableCardModel(c)).ToArray(),
-                        Players = playerTable.Game.Players.Select(c => new GetStatusModel.PlayerModel { Name = c.Name, CardsCount = c.Hand.Count }).ToArray()
+                        Players = playerTable.Game.Players.Where(p => p != player)
+                                                          .Select((c, i) => new GetStatusModel.PlayerModel { Index = i, Name = c.Name, CardsCount = c.Hand.Count })
+                                                          .ToArray()
                     },
                     Tables = null
                 };
