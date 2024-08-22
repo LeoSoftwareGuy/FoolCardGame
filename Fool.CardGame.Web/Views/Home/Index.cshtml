@@ -22,7 +22,7 @@
 <div id="main" class="hidden">
     <div id="playingCardsContainer">
         <div id="playingCards"></div>
-        <button id="play__btn" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
+        <button id="playingCards__btn" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
     </div>
     <div id="field"></div>
     <div id="deck"></div>
@@ -40,7 +40,9 @@
     <div class="deck_card_shirt">
         <label class="deck_card_number"></label>
     </div>
-    <div class="playingTable"></div>
+    <div class="playingTable">
+        <button class="btn btn-dark playingTable__btn" onclick="sitToTheTableClick(this)">Sit Here</button>
+    </div>
     <div class="player">
         <img class="player__img" src="/images/player.png" />
         <label class="player__name"></label>
@@ -148,6 +150,12 @@
         });
     }
 
+    function sitToTheTableClick(element) {
+        debugger;
+        let tableId = element.closest('.playingTable').getAttribute('table-id');
+        sitToTheTable(tableId);
+    }
+
     // passing params as if its GET method, bad approach but for some reason POST does not work.
     function sitToTheTable(tableId) {
         SendRequest({
@@ -183,47 +191,13 @@
                 document.getElementById('players').innerHTML = '';
 
                 if (status.table == null) {
-                    // we need to draw available tables for the user to sit at
-                    for (let i = 0; i < status.tables.length; i++) {
-                        let table = status.tables[i];
-                        let tableDiv = document.getElementsByClassName('playingTable')[0].cloneNode(true);
-                        tableDiv.innerHTML = '';
-
-                        tableDiv.addEventListener('click', function (event) {
-                            if (this.classList.contains('active')) {
-                                this.classList.remove('active');
-                            } else {
-                                this.classList.add('active');
-                            }
-                            // checkMoves();
-                        });
-                        document.getElementById('tables').appendChild(tableDiv);
-                    }
+                    drawTables(status);
                 } else {
-                    for (let cardIndex = 0; cardIndex < status.table.playerHand.length; cardIndex++) {
-                        let card = status.table.playerHand[cardIndex];
-                        let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
-
-                        // Add event listener to the card div
-                        cardDiv.addEventListener('click', function (event) {
-                            // Toggle the active class on the card div itself, not the label
-                            if (this.classList.contains('active')) {
-                                this.classList.remove('active');
-                            } else {
-                                this.classList.add('active');
-                            }
-                            checkMoves();
-                        });
-
-                        cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(card.rank, card.suit);
-                        cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(card.suit);
-
-                        document.getElementById('playingCards').appendChild(cardDiv);
-                    }
-
+                    drawHand(status);
                     if (status.table.trump != null) {
                         let trumpCard = status.table.trump;
                         let trumpCardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
+                        // trumpCardDiv.innerHTML = '';
 
                         trumpCardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(trumpCard.rank);
                         trumpCardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(trumpCard.suit);
@@ -236,18 +210,7 @@
                         document.getElementById('deck').appendChild(cardDiv);
                     }
 
-                    for (let i = 0; i < status.table.cardsOnTheTable.length; i++) {
-                        let attackingCard = status.table.cardsOnTheTable[i].attackingCard;
-                        let cardDiv = document.getElementsByClassName('playingCard')[0].cloneNode(true);
-                        cardDiv.innerHTML = '';
-
-                        cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(attackingCard.rank, attackingCard.suit);
-                        cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(attackingCard.suit);
-
-                        // here should put another on it as defending
-                        document.getElementById('field').appendChild(cardDiv);
-                    }
-
+                    drawBattleField(status);
                     drawPlayersAndTheirHands(status);
                 }
             },
@@ -257,21 +220,101 @@
         });
     }
 
+
+    function drawHand(status) {
+        if (status.table.playerHand.length > 0) {
+            let originalPlayingCardDiv = document.getElementsByClassName('playingCard')[0];
+            let fragment = document.createDocumentFragment();
+
+            for (let cardIndex = 0; cardIndex < status.table.playerHand.length; cardIndex++) {
+                let card = status.table.playerHand[cardIndex];
+                let cardDiv = originalPlayingCardDiv.cloneNode(true);
+
+                // Add event listener to the card div
+                cardDiv.addEventListener('click', function (event) {
+                    // Toggle the active class on the card div itself, not the label
+                    if (this.classList.contains('active')) {
+                        this.classList.remove('active');
+                    } else {
+                        this.classList.add('active');
+                    }
+                    checkMoves();
+                });
+
+                cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(card.rank, card.suit);
+                cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(card.suit);
+
+                fragment.appendChild(cardDiv);
+            }
+            document.getElementById('playingCards').appendChild(fragment);
+        }
+    }
+
+
+    function drawTables(status) {
+        let originalTableDiv = document.getElementsByClassName('playingTable')[0];
+        let fragment = document.createDocumentFragment();
+
+        for (let i = 0; i < status.tables.length; i++) {
+            let table = status.tables[i];
+            let tableDiv = originalTableDiv.cloneNode(true);
+
+            let buttonElement = tableDiv.querySelector('.playingTable__btn');
+            tableDiv.appendChild(buttonElement);
+            tableDiv.setAttribute('table-id', table.id);
+
+            for (var j = 0; j < table.players.length; j++) {
+                let player = table.players[j];
+                let playerLabel = document.createElement("label");
+                playerLabel.innerHTML = player.name;
+                playerLabel.classList.add('playingTable_player_name');
+                tableDiv.appendChild(playerLabel);
+            }
+            fragment.appendChild(tableDiv);
+        }
+        document.getElementById('tables').appendChild(fragment);
+    }
+
+
+    function drawBattleField(status) {
+        if (status.table.cards.cardsOnTheTable.length > 0) {
+            // Cache the original card element before the loop
+            let originalCardDiv = document.getElementsByClassName('playingCard')[0];
+            // Create a document fragment to batch append operations
+            let fragment = document.createDocumentFragment();
+
+            for (let i = 0; i < status.table.cardsOnTheTable.length; i++) {
+                let attackCard = status.table.cardsOnTheTable[i].attackingCard;
+                let cardDiv = originalCardDiv.cloneNode(true);
+
+                cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(attackCard.rank, attackCard.suit);
+                cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(attackCard.suit);
+                fragment.appendChild(cardDiv);
+            }
+            document.getElementById('field').appendChild(fragment);
+        }
+    }
+
     // We need to draw people clock wise
     // If our index is 3 then 2 1 3 5 4
     function drawPlayersAndTheirHands(status) {
         let playerIndexes = [];
         for (let i = status.table.myIndex - 1; i >= 0; i--) {
-            playerIndexes.push({index:i, gameIndex:i});
+            playerIndexes.push({ index: i, gameIndex: i });
         }
         for (let i = status.table.players.length - 1; i >= status.table.myIndex; i--) {
-            playerIndexes.push({ index: i, gameIndex: i + 1});
+            playerIndexes.push({ index: i, gameIndex: i + 1 });
         }
+
+        let originalPlayerDiv = document.getElementsByClassName('player')[0];
+        let originalPlayerCardsDiv = document.getElementsByClassName('player__card')[0]
+        let fragmentForPlayers = document.createDocumentFragment();
 
         for (let i = 0; i < playerIndexes.length; i++) {
             let playerIndex = playerIndexes[i].index;
             let player = status.table.players[playerIndex];
-            let playerDiv = document.getElementsByClassName('player')[0].cloneNode(true);
+            let playerDiv = originalPlayerDiv.cloneNode(true);
+
             playerDiv.getElementsByClassName('player__name')[0].innerHTML = player.name;
             playerDiv.getElementsByClassName('player__name')[0].title = player.name;
             // Clear any previous cards in this playerDiv
@@ -279,26 +322,30 @@
             playerCardsDiv.innerHTML = ''; // Clear any previous cards
 
             if (playerIndex.gameIndex == status.table.activePlayerIndex) {
-                debugger;
                 playerDiv.classList.add('active');
             }
-            document.getElementById('players').appendChild(playerDiv);
+
+            fragmentForPlayers.appendChild(playerDiv);
+
 
             for (let j = 0; j < player.cardsCount; j++) {
-                let cardDiv = document.getElementsByClassName('player__card')[0].cloneNode(true);
+                let cardDiv = originalPlayerCardsDiv.cloneNode(true);
                 playerCardsDiv.appendChild(cardDiv);
             }
         }
+
+        document.getElementById('players').appendChild(fragmentForPlayers);
     }
 
 
+
+
     function checkMoves() {
-        debugger;
         let selectedCard = document.querySelectorAll('.playingCard.active');
         if (selectedCard.length > 0) {
-            document.getElementById('play__btn').classList.remove('hidden');
+            document.getElementById('playingCards__btn').classList.remove('hidden');
         } else {
-            document.getElementById('play__btn').classList.add('hidden');
+            document.getElementById('playingCards__btn').classList.add('hidden');
         }
     }
 
@@ -383,6 +430,7 @@
     }
 
     .playingTable {
+        position: relative;
         min-height: 10rem;
         min-width: 10rem;
         border: 1px solid rgba(0,0,0,.125);
@@ -395,6 +443,22 @@
             background-color: #f0f0f0; /* Slightly different background color */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add shadow */
         }
+
+    .playingTable__btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 29%;
+        padding: 0.30rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .playingTable_player_name {
+        display: block;
+        margin: 1rem 0 0 1.7rem;
+        display: block;
+        font-size: 0.6rem;
+    }
 
     #field {
         margin-top: 4rem;
@@ -414,7 +478,7 @@
         justify-content: center;
     }
 
-    #play__btn {
+    #playingCards__btn {
         margin-top: 1rem;
     }
 
@@ -541,7 +605,7 @@
         }
 
     .player.active .player__img {
-        border:2px solid blue;
+        border: 2px solid blue;
     }
 
 </style>

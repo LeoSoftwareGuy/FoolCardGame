@@ -18,7 +18,7 @@ namespace Fool.Core.Services
         {
             var tableId = Guid.NewGuid();
             var game = new Game();
-            var table = new Table { Game = game, PlayersAndTheirSecretKeys = new Dictionary<string, Player> { } };
+            var table = new Table { Id = tableId, Game = game, PlayersAndTheirSecretKeys = new Dictionary<string, Player> { } };
             TablesWithGames.Add(tableId, table);
             return tableId;
         }
@@ -30,20 +30,20 @@ namespace Fool.Core.Services
                 throw new FoolExceptions("You are already plaing on another table");
             }
 
-            if (TablesWithGames.TryGetValue(tableId, out var table))
+            if (TablesWithGames.FirstOrDefault(c => c.Key.Equals(tableId)).Value is Table table)
             {
                 var player = table.Game.AddPlayer(playerName);
                 table.PlayersAndTheirSecretKeys.Add(playerSecret, player);
 
-                var debug = true;
+                var debug = false;
                 if (debug)
                 {
                     table.Game.AddPlayer("1 Elmaz");
                     table.Game.AddPlayer("2 Lets Check This Long Name Out");
                     table.Game.AddPlayer("3 Bob");
-                    table.Game.AddPlayer("4 WhatIfThisNameIsEvenLongerThenPreviousName");
-                    table.Game.AddPlayer("5 Vincent");
+                    table.Game.AddPlayer("4 Vincent");
                     table.Game.PrepareForTheGame();
+                    table.Game.AttackingPlayer!.FirstAttack([2]);
                 }
             }
             else
@@ -56,6 +56,8 @@ namespace Fool.Core.Services
 
         public GetStatusModel GetStatus(string playerSecret)
         {
+            //If player is already siting behind the table then return the table status
+            // otherwise return all tables with players
             var playerTable = FindTableWhereUserIsPlaying(playerSecret);
             var player = playerTable == null ? null : playerTable.PlayersAndTheirSecretKeys[playerSecret];
 
@@ -64,7 +66,13 @@ namespace Fool.Core.Services
                 return new GetStatusModel
                 {
                     Table = null,
-                    Tables = TablesWithGames.Select(t => new GetStatusModel.TableModel { Id = t.Value.Id }).ToArray()
+                    Tables = TablesWithGames.Select(t => new GetStatusModel.TableModel
+                    {
+                        Id = t.Value.Id,
+                        Players = t.Value.PlayersAndTheirSecretKeys.Select(x => x.Value)
+                                                                   .Select(x => new GetStatusModel.PlayerModel { Name = x.Name })
+                                                                   .ToArray()
+                    }).ToArray()
                 };
 
             }
