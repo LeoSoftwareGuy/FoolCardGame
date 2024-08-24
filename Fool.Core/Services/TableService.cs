@@ -104,7 +104,10 @@ namespace Fool.Core.Services
                                                           .ToArray(),
                         Status = playerTable.Game.GameStatus != null
                                                              ? playerTable.Game.GameStatus.ToString()
-                                                             : null
+                                                             : null,
+                        OwnerSecretKey = playerTable.Owner != null
+                                                  ? playerTable.PlayersAndTheirSecretKeys.FirstOrDefault(p=>p.Value == playerTable.Owner).Key
+                                                : null
                     },
                     Tables = null
                 };

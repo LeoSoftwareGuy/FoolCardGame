@@ -19,6 +19,7 @@ namespace Fool.CardGame.Web.Models
             public int MyIndex { get; set; }
             public int ActivePlayerIndex { get; set; }
             public string? Status { get; set; }
+            public string? OwnerSecretKey { get; set; }
         }
 
         public class CardModel

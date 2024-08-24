@@ -234,11 +234,14 @@
 
                     if (status.table.status != null && status.table.status != undefined) {
                         document.getElementById('gameStatus').innerHTML = status.table.status;
-                        if (status.table.status == 'ReadyToBegin') {
-                            document.getElementById('startGame').classList.remove('hidden');
-                        } else {
-                            document.getElementById('startGame').classList.add('hidden');
-                        }
+
+                        if (status.table.ownerSecretKey != null){
+                            if (status.table.status == 'ReadyToBegin' && user.secret == status.table.ownerSecretKey) {
+                                document.getElementById('startGame').classList.remove('hidden');
+                            } else {
+                                document.getElementById('startGame').classList.add('hidden');
+                            }
+                        }                      
                     }
                 }
             },
