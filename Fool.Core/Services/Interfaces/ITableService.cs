@@ -8,7 +8,8 @@ namespace Fool.Core.Services.Interfaces
         Dictionary<Guid, Table> TablesWithGames { get; }
         Guid CreateTable();
         void SitToTheTable(string playerSecret, string playerNamer, Guid tableId);
-        void Attack(string playerSecret, string playerName, int[] cardIds);
+        void Attack(Guid tableId, string playerSecret, int[] cardIds);
+        void StartGame(Guid tableId, string playerSecret);
         GetStatusModel GetStatus(string playerSecret);
     }
 }

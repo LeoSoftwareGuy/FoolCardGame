@@ -8,5 +8,6 @@
         public Guid Id { get; set; }
         public Game Game { get; set; }
         public Dictionary<string, Player> PlayersAndTheirSecretKeys { get; set; }
+        public Player Owner { get; set; }
     }
 }

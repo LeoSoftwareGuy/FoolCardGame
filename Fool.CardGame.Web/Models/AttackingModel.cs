@@ -2,11 +2,9 @@
 
 namespace Fool.CardGame.Web.Models
 {
-    public class AttackingModel
+    public class AttackingModel : AuthModel
     {
-        //public Guid TableId { get; set; }
-        public string PlayerSecret { get; set; }
-        public string PlayerName { get; set; }
+        public Guid TableId { get; set; }
 
         [FromQuery(Name = "cardIds")]
         public int[] CardIds { get; set; }

@@ -25,6 +25,9 @@ namespace Fool.Core.Services
 
         public void SitToTheTable(string playerSecret, string playerName, Guid tableId)
         {
+            // player who sit first is the main player
+            // when function to quit the game will be added will come back to this, as we will need to make new main player
+            // when all players leave the table, table is deleted
             if (CheckIfPlayerIsAlreadyPlayingOnAnotherTable(playerSecret))
             {
                 throw new FoolExceptions("You are already plaing on another table");
@@ -35,15 +38,20 @@ namespace Fool.Core.Services
                 var player = table.Game.AddPlayer(playerName);
                 table.PlayersAndTheirSecretKeys.Add(playerSecret, player);
 
+                if (IfThereIsOnlyOnePlayerOnTheTable(table))
+                {
+                    table.Owner = player;
+                }
+
                 var debug = false;
                 if (debug)
                 {
                     table.Game.AddPlayer("1 Elmaz");
                     table.Game.AddPlayer("2 Lets Check This Long Name Out");
-                    table.Game.AddPlayer("3 Bob");
-                    table.Game.AddPlayer("4 Vincent");
+                    //table.Game.AddPlayer("3 Bob");
+                    //table.Game.AddPlayer("4 Vincent");
                     table.Game.PrepareForTheGame();
-                    table.Game.AttackingPlayer!.FirstAttack([2]);
+                    // table.Game.AttackingPlayer!.FirstAttack([2]);
                 }
             }
             else
@@ -85,27 +93,50 @@ namespace Fool.Core.Services
                         Id = playerTable!.Id,
                         MyIndex = playerTable.Game.Players.IndexOf(player!),
                         ActivePlayerIndex = playerTable.Game.Players.IndexOf(playerTable.Game.AttackingPlayer!),
-                        PlayerHand = player!.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
+                        PlayerHand = player.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
                         DeckCardsCount = playerTable.Game.Deck.CardsCount,
-                        Trump = new GetStatusModel.CardModel(playerTable.Game.Deck.TrumpCard),
+                        Trump = playerTable.Game.Deck.TrumpCard != null
+                                                                ? new GetStatusModel.CardModel(playerTable.Game.Deck.TrumpCard)
+                                                                : null,
                         CardsOnTheTable = playerTable.Game.CardsOnTheTable.Select(c => new GetStatusModel.TableCardModel(c)).ToArray(),
                         Players = playerTable.Game.Players.Where(p => p != player)
                                                           .Select((c, i) => new GetStatusModel.PlayerModel { Index = i, Name = c.Name, CardsCount = c.Hand.Count })
-                                                          .ToArray()
+                                                          .ToArray(),
+                        Status = playerTable.Game.GameStatus != null
+                                                             ? playerTable.Game.GameStatus.ToString()
+                                                             : null
                     },
                     Tables = null
                 };
             }
         }
 
-        public void Attack(string playerSecret, string playerName, int[] cardIds)
+        public void StartGame(Guid tableId, string playerSecret)
+        {
+            var table = TablesWithGames[tableId];
+            var player = table.PlayersAndTheirSecretKeys[playerSecret];
+            if (table == null || player == null)
+            {
+                throw new FoolExceptions("Either table or player were not found!");
+            }
+
+            if (table.Owner != player)
+            {
+                throw new FoolExceptions("You are not table owner, you cant start the game");
+            }
+
+            table.Game.PrepareForTheGame();
+        }
+
+
+        public void Attack(Guid tableId, string playerSecret, int[] cardIds)
         {
             if (cardIds.Length == 0)
             {
                 throw new FoolExceptions("You cant Attack without providing card ids");
             }
 
-            var playerTable = FindTableWhereUserIsPlaying(playerSecret);
+            var playerTable = TablesWithGames[tableId];
             var player = playerTable == null ? null : playerTable.PlayersAndTheirSecretKeys[playerSecret];
 
             if (playerTable == null || player == null)
@@ -132,6 +163,11 @@ namespace Fool.Core.Services
         {
             var table = TablesWithGames.Values.FirstOrDefault(t => t.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
             return table == null ? null : table;
+        }
+
+        private bool IfThereIsOnlyOnePlayerOnTheTable(Table table)
+        {
+            return table.PlayersAndTheirSecretKeys.Values.Count == 1;
         }
     }
 }

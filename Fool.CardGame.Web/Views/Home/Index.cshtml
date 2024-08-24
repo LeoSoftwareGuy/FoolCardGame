@@ -20,6 +20,8 @@
 
 
 <div id="main" class="hidden">
+    <label id="gameStatus"></label>
+    <button id="startGame" class="btn btn-info hidden" onclick="startGame()">Start Game</button>
     <div id="playingCardsContainer">
         <div id="playingCards"></div>
         <button id="playingCards__btn" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
@@ -175,6 +177,22 @@
         });
     }
 
+    function startGame() {
+        SendRequest({
+            method: 'POST',
+            url: '/Home/StartGame',
+            body: {
+                tableId: gameStatus.table.id,
+                playerSecret: user.secret
+            },
+            success: function (data) {
+                getStatus();
+            },
+            error: function (data) {
+                alert("Attack method did not work")
+            }
+        });
+    }
 
     function getStatus() {
         SendRequest({
@@ -189,6 +207,7 @@
                 document.getElementById('field').innerHTML = '';
                 document.getElementById('tables').innerHTML = '';
                 document.getElementById('players').innerHTML = '';
+                document.getElementById('gameStatus').innerHTML = '';
 
                 if (status.table == null) {
                     drawTables(status);
@@ -212,6 +231,15 @@
 
                     drawBattleField(status);
                     drawPlayersAndTheirHands(status);
+
+                    if (status.table.status != null && status.table.status != undefined) {
+                        document.getElementById('gameStatus').innerHTML = status.table.status;
+                        if (status.table.status == 'ReadyToBegin') {
+                            document.getElementById('startGame').classList.remove('hidden');
+                        } else {
+                            document.getElementById('startGame').classList.add('hidden');
+                        }
+                    }
                 }
             },
             error: function (data) {
@@ -277,7 +305,7 @@
 
 
     function drawBattleField(status) {
-        if (status.table.cards.cardsOnTheTable.length > 0) {
+        if (status.table.cardsOnTheTable.length > 0) {
             // Cache the original card element before the loop
             let originalCardDiv = document.getElementsByClassName('playingCard')[0];
             // Create a document fragment to batch append operations
@@ -364,7 +392,7 @@
                 url: '/Home/Attack',
                 body: {
                     playerSecret: user.secret,
-                    playerName: user.name,
+                    tableId: gameStatus.table.id,
                     cardIds: cardIndexes
                 },
                 success: function (data) {
@@ -392,6 +420,8 @@
             return suitChar;
         }
     }
+
+
 
 
 
@@ -424,6 +454,13 @@
     #main {
         margin-top: 1rem;
         width: 100%;
+    }
+
+    .gameStatus {
+        padding: 1rem 1rem;
+        font-size: 1.5rem;
+        font-weight: 500;
+        text-align: center;
     }
 
     .createTableBtn {

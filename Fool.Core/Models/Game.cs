@@ -13,13 +13,13 @@ namespace Fool.Core.Models
             Players = new List<Player>();
             CardsOnTheTable = new List<TableCard>();
             RoundStarted = false;
-
-            Deck.Shuffle();
+            GameStatus = GameStatus.WaitingForPlayers;
         }
         public Deck Deck { get; set; }
         public List<Player> Players { get; }
 
         public List<TableCard> CardsOnTheTable { get; private set; }
+        public GameStatus GameStatus { get; private set; }
         public bool RoundStarted { get; private set; }
 
 
@@ -63,10 +63,43 @@ namespace Fool.Core.Models
         }
 
 
+        public Player AddPlayer(string playerName)
+        {
+            if (Players.Count >= 6)
+            {
+                throw new FoolExceptions("Max number of player per table is 6");
+            }
+
+            if (GameStatus == GameStatus.InProgress)
+            {
+                throw new FoolExceptions("Game has already started, you cant join now");
+            }
+
+            var player = new Player(playerName, this);
+            Players.Add(player);
+
+            if (Players.Count >= 2)
+            {
+                GameStatus = GameStatus.ReadyToBegin;
+            }
+            return player;
+        }
+
+
         public void PrepareForTheGame()
         {
-            DealHands();
-            _attackingPlayer = DecideWhoPlaysFirst();
+            if (GameStatus != GameStatus.ReadyToBegin)
+            {
+                throw new FoolExceptions($"Status of the game is: {GameStatus.ToString()}, Must be ReadyToBegin");
+            }
+            else
+            {
+                Deck.Shuffle();
+                DealHands();
+                _attackingPlayer = DecideWhoPlaysFirst();
+            }
+
+            GameStatus = GameStatus.InProgress;
         }
 
 
@@ -173,24 +206,7 @@ namespace Fool.Core.Models
         }
 
 
-        public Player AddPlayer(string playerName)
-        {
-            if (Players.Count >= 6)
-            {
-                throw new FoolExceptions("Max number of player per table is 6");
-            }
 
-            var player = new Player(playerName, this);
-            Players.Add(player);
-            return player;
-        }
-        private void LetPlayersToTheTable(List<string> playerNames)
-        {
-            foreach (var name in playerNames)
-            {
-                Players.Add(new Player(name, this));
-            }
-        }
 
         private Player DecideWhoPlaysFirst()
         {
