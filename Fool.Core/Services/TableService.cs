@@ -107,7 +107,8 @@ namespace Fool.Core.Services
                                                              : null,
                         OwnerSecretKey = playerTable.Owner != null
                                                   ? playerTable.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == playerTable.Owner).Key
-                                                : null
+                                                : null,
+                        DefenderSecretKey = playerTable.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == playerTable.Game.DefendingPlayer).Key
                     },
                     Tables = null
                 };
