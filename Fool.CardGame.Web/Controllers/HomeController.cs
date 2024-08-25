@@ -62,6 +62,12 @@ namespace Fool.CardGame.Web.Controllers
             _tableService.Attack(model.TableId, model.PlayerSecret, model.CardIds);
         }
 
+        [HttpPost]
+        public void Defend([FromBody] DefendingModel model)
+        {
+            _tableService.Defend(model.TableId, model.PlayerSecret, model.DefendingCardIndex, model.AttackingCardIndex);
+        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

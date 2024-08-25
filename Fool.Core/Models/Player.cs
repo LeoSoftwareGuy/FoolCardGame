@@ -83,14 +83,14 @@ namespace Fool.Core.Models
             }
         }
 
-        public void Defend(int defendingCardIndex, Guid attackingCardId)
+        public void Defend(int defendingCardIndex, int attackingCardId)
         {
             if (defendingCardIndex < 0 || defendingCardIndex >= Hand.Count)
             {
                 throw new FoolExceptions("Card Index can be 0-5");
             }
             var defendingCard = Hand[defendingCardIndex];
-            var cardFromTheTable = _game.CardsOnTheTable.FirstOrDefault(c => c.Id == attackingCardId);
+            var cardFromTheTable = _game.CardsOnTheTable[attackingCardId];
 
             _game.Defend(this, defendingCard, cardFromTheTable.AttackingCard);
             Hand.Remove(defendingCard);

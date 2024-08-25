@@ -24,7 +24,8 @@
     <button id="startGame" class="btn btn-info hidden" onclick="startGame()">Start Game</button>
     <div id="playingCardsContainer">
         <div id="playingCards"></div>
-        <button id="playingCards__btn" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
+        <button id="playingCards_btn_attack" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
+        <button id="playingCards_btn_defend" class="btn btn-light hidden" onclick="defend()">Defend</button>
     </div>
     <div id="field"></div>
     <div id="deck"></div>
@@ -38,6 +39,14 @@
             <label class="playingCard_info_rank">6</label>
             <label class="playingCard_info_suit">♦</label>
         </div>
+        <label class="playingCard_info_largeSuit"></label>
+    </div>
+    <div class="defendingCard">
+        <div class="playingCard__info">
+            <label class="playingCard_info_rank">6</label>
+            <label class="playingCard_info_suit">♦</label>
+        </div>
+        <label class="playingCard_info_largeSuit"></label>
     </div>
     <div class="deck_card_shirt">
         <label class="deck_card_number"></label>
@@ -231,18 +240,7 @@
 
                     drawBattleField(status);
                     drawPlayersAndTheirHands(status);
-
-                    if (status.table.status != null && status.table.status != undefined) {
-                        document.getElementById('gameStatus').innerHTML = status.table.status;
-
-                        if (status.table.ownerSecretKey != null){
-                            if (status.table.status == 'ReadyToBegin' && user.secret == status.table.ownerSecretKey) {
-                                document.getElementById('startGame').classList.remove('hidden');
-                            } else {
-                                document.getElementById('startGame').classList.add('hidden');
-                            }
-                        }                      
-                    }
+                    drawGameStatus(status);
                 }
             },
             error: function (data) {
@@ -274,6 +272,7 @@
 
                 cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(card.rank, card.suit);
                 cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(card.suit);
+                cardDiv.getElementsByClassName('playingCard_info_largeSuit')[0].innerHTML = getSuit(card.suit);
 
                 fragment.appendChild(cardDiv);
             }
@@ -311,15 +310,34 @@
         if (status.table.cardsOnTheTable.length > 0) {
             // Cache the original card element before the loop
             let originalCardDiv = document.getElementsByClassName('playingCard')[0];
+            let originalDefendingCardDiv = document.getElementsByClassName('defendingCard')[0];
             // Create a document fragment to batch append operations
             let fragment = document.createDocumentFragment();
 
             for (let i = 0; i < status.table.cardsOnTheTable.length; i++) {
-                let attackCard = status.table.cardsOnTheTable[i].attackingCard;
+                let cardOnTheTable = status.table.cardsOnTheTable[i];
                 let cardDiv = originalCardDiv.cloneNode(true);
 
-                cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(attackCard.rank, attackCard.suit);
-                cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(attackCard.suit);
+                cardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(cardOnTheTable.attackingCard.rank, cardOnTheTable.attackingCard.suit);
+                cardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(cardOnTheTable.attackingCard.suit);
+
+
+                if (cardOnTheTable.defendingCard) {
+                    let defendingCardDiv = originalDefendingCardDiv.cloneNode(true);
+                    defendingCardDiv.getElementsByClassName('playingCard_info_rank')[0].innerHTML = getRank(cardOnTheTable.defendingCard.rank, cardOnTheTable.defendingCard.suit);
+                    defendingCardDiv.getElementsByClassName('playingCard_info_suit')[0].innerHTML = getSuit(cardOnTheTable.defendingCard.suit);
+                    defendingCardDiv.getElementsByClassName('playingCard_info_largeSuit')[0].innerHTML = getSuit(cardOnTheTable.defendingCard.suit);
+                    fragment.appendChild(defendingCardDiv);
+                } else {
+                    cardDiv.addEventListener('click', function (event) {
+                        if (this.classList.contains('active')) {
+                            this.classList.remove('active');
+                        } else {
+                            this.classList.add('active');
+                        }
+                        checkMoves();
+                    });
+                }
                 fragment.appendChild(cardDiv);
             }
             document.getElementById('field').appendChild(fragment);
@@ -369,19 +387,72 @@
     }
 
 
+    function drawGameStatus(status) {
+        if (status.table.status != null && status.table.status != undefined) {
+            document.getElementById('gameStatus').innerHTML = status.table.status;
 
-
-    function checkMoves() {
-        let selectedCard = document.querySelectorAll('.playingCard.active');
-        if (selectedCard.length > 0) {
-            document.getElementById('playingCards__btn').classList.remove('hidden');
-        } else {
-            document.getElementById('playingCards__btn').classList.add('hidden');
+            if (status.table.ownerSecretKey != null) {
+                if (status.table.status == 'ReadyToBegin' && user.secret == status.table.ownerSecretKey) {
+                    document.getElementById('startGame').classList.remove('hidden');
+                } else {
+                    document.getElementById('startGame').classList.add('hidden');
+                }
+            }
         }
     }
 
+    function checkMoves() {
+        // shows move button to attack if hand cards are selected
+        let activeCardsOnTheHand = document.querySelectorAll('#playingCardsContainer .playingCard.active');
+        if (activeCardsOnTheHand.length > 0) {
+            document.getElementById('playingCards_btn_attack').classList.remove('hidden');
+        } else {
+            document.getElementById('playingCards_btn_attack').classList.add('hidden');
+        }
+
+
+        // shows defend button if table cards are selected
+        let activeCardsOnTheBattleField = document.querySelectorAll('#field .playingCard.active');
+        // only 1 card should be selected as attackign and 1 as defending
+        if (activeCardsOnTheBattleField.length == 1 && activeCardsOnTheHand.length == 1) {
+            document.getElementById('playingCards_btn_defend').classList.remove('hidden');
+        } else {
+            document.getElementById('playingCards_btn_defend').classList.add('hidden');
+        }
+    }
+
+
+    function defend() {
+        let defendingCard = document.querySelector('#playingCards .playingCard.active');
+        let attackingCard = document.querySelector('#field .playingCard.active');
+
+        if (defendingCard && attackingCard) {
+            let defendingCardIndex = Array.prototype.indexOf.call(defendingCard.parentNode.children, defendingCard);
+            let attackingCardIndex = Array.prototype.indexOf.call(attackingCard.parentNode.children, attackingCard);
+
+            SendRequest({
+                method: 'POST',
+                url: '/Home/Defend',
+                body: {
+                    tableId: gameStatus.table.id,
+                    playerSecret: user.secret,
+                    defendingCardIndex: defendingCardIndex,
+                    attackingCardIndex: attackingCardIndex
+                },
+                success: function (data) {
+                    getStatus();
+                },
+                error: function (data) {
+                    alert("Attack method did not work");
+                }
+            });
+        }
+    }
+
+
+
     function makeAMove() {
-        let selectedCards = document.querySelectorAll('.playingCard.active');
+        let selectedCards = document.querySelectorAll('#playingCardsContainer .playingCard.active');
         let cardIndexes = [];
         if (selectedCards.length > 0) {
             let cards = document.querySelectorAll('#playingCards .playingCard');
@@ -407,6 +478,8 @@
             });
         }
     }
+
+
 
     function getRank(value, suitChar) {
         if (suitChar === '♦' || suitChar === '♥') {
@@ -518,7 +591,7 @@
         justify-content: center;
     }
 
-    #playingCards__btn {
+    #playingCards_btn_attack {
         margin-top: 1rem;
     }
 
@@ -539,12 +612,26 @@
     }
 
     .playingCard {
+        position: relative;
+        z-index:0;
         width: 3rem;
         height: 6rem;
         border: 1px solid rgba(0,0,0,.125);
         background-color: #fff;
         border-radius: .25rem;
     }
+
+    .defendingCard{
+        margin-top:2rem;
+        position: absolute;
+        z-index:2;
+        width: 3rem;
+        height: 6rem;
+        border: 1px solid rgba(0,0,0,.125);
+        background-color: #fff;
+        border-radius: .25rem;
+    }
+
 
         .playingCard.active {
             width: 3.5rem; /* Increase width */
@@ -559,8 +646,8 @@
         width: 100%;
         max-height: 1rem;
         display: flex;
-        flex-direction: column;
-        column-gap: .01rem;
+        justify-content:space-between;
+        align-items:center;
     }
 
     .playingCard_info_rank {
@@ -570,11 +657,18 @@
     }
 
     .playingCard_info_suit {
-        display: block;
-        font-size: 3.2rem;
+        padding-right:.3rem;
+        font-size: 1.2rem;
         font-weight: 500;
     }
 
+    .playingCard_info_largeSuit {
+        margin-top: 0.4rem;
+        font-size: 2.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
 
     .deck_card_shirt {

@@ -106,7 +106,7 @@ namespace Fool.Core.Services
                                                              ? playerTable.Game.GameStatus.ToString()
                                                              : null,
                         OwnerSecretKey = playerTable.Owner != null
-                                                  ? playerTable.PlayersAndTheirSecretKeys.FirstOrDefault(p=>p.Value == playerTable.Owner).Key
+                                                  ? playerTable.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == playerTable.Owner).Key
                                                 : null
                     },
                     Tables = null
@@ -155,6 +155,19 @@ namespace Fool.Core.Services
             {
                 player.FirstAttack(cardIds);
             }
+        }
+
+        public void Defend(Guid tableId, string playerSecret, int defendingCardIndex, int attackingCardIndex)
+        {
+            var table = TablesWithGames[tableId];
+            var player = table.PlayersAndTheirSecretKeys[playerSecret];
+
+            if (table == null || player == null)
+            {
+                throw new FoolExceptions("Player or player table is not found");
+            }
+
+            player.Defend(defendingCardIndex, attackingCardIndex);
         }
 
         private bool CheckIfPlayerIsAlreadyPlayingOnAnotherTable(string playerSecret)
