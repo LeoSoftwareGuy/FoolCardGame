@@ -37,7 +37,7 @@ namespace Fool.CardGame.Web.Controllers
         [HttpPost]
         public void JoinTable([FromBody] JoinTableModel model)
         {
-            _tableService.SitToTheTable(model.PlayerSecret, model.PlayerName, model.TableGuid);
+            _tableService.SitToTheTable(model.PlayerSecret, model.PlayerName, model.TableId);
         }
 
 
@@ -50,7 +50,7 @@ namespace Fool.CardGame.Web.Controllers
 
 
         [HttpPost]
-        public void StartGame([FromBody] StartGameModel model)
+        public void StartGame([FromBody] AuthModel model)
         {
             _tableService.StartGame(model.TableId, model.PlayerSecret);
         }
@@ -66,6 +66,12 @@ namespace Fool.CardGame.Web.Controllers
         public void Defend([FromBody] DefendingModel model)
         {
             _tableService.Defend(model.TableId, model.PlayerSecret, model.DefendingCardIndex, model.AttackingCardIndex);
+        }
+
+        [HttpPost]
+        public void SurrenderRound([FromBody] AuthModel model)
+        {
+            _tableService.SurrenderCurrentRound(model.TableId, model.PlayerSecret);
         }
 
 

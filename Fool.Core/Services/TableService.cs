@@ -43,16 +43,16 @@ namespace Fool.Core.Services
                     table.Owner = player;
                 }
 
-                var debug = false;
-                if (debug)
-                {
-                    table.Game.AddPlayer("1 Elmaz");
-                    table.Game.AddPlayer("2 Lets Check This Long Name Out");
-                    //table.Game.AddPlayer("3 Bob");
-                    //table.Game.AddPlayer("4 Vincent");
-                    table.Game.PrepareForTheGame();
-                    // table.Game.AttackingPlayer!.FirstAttack([2]);
-                }
+                //var debug = false;
+                //if (debug)
+                //{
+                //    table.Game.AddPlayer("1 Elmaz");
+                //    table.Game.AddPlayer("2 Lets Check This Long Name Out");
+                //    //table.Game.AddPlayer("3 Bob");
+                //    //table.Game.AddPlayer("4 Vincent");
+                //    table.Game.PrepareForTheGame();
+                //    // table.Game.AttackingPlayer!.FirstAttack([2]);
+                //}
             }
             else
             {
@@ -171,6 +171,29 @@ namespace Fool.Core.Services
             player.Defend(defendingCardIndex, attackingCardIndex);
         }
 
+
+        public void SurrenderCurrentRound(Guid tableId, string playerSecret)
+        {
+            var table = TablesWithGames[tableId];
+            var player = table.PlayersAndTheirSecretKeys[playerSecret];
+
+            if (table == null || player == null)
+            {
+                throw new FoolExceptions("Player or player table is not found");
+            }
+
+            if (table.Game.DefendingPlayer == player)
+            {
+                table.Game.FinishTheRound();
+            }
+            else
+            {
+                throw new FoolExceptions("You can only surrender if you are defending");
+            }
+        }
+
+
+
         private bool CheckIfPlayerIsAlreadyPlayingOnAnotherTable(string playerSecret)
         {
             return TablesWithGames.Values.Any(table => table.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
@@ -186,5 +209,6 @@ namespace Fool.Core.Services
         {
             return table.PlayersAndTheirSecretKeys.Values.Count == 1;
         }
+
     }
 }

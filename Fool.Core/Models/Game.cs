@@ -113,23 +113,20 @@ namespace Fool.Core.Models
 
         public void FinishTheRound()
         {
-            if (CardsOnTheTable.All(c => c.DefendingCard != null))
-            {
-                // Defending player defended successfully
-                CardsOnTheTable = new List<TableCard>();
-            }
-            else
+            var wasDefendingPlayerSuccessful = true;
+            if (!CardsOnTheTable.All(c => c.DefendingCard != null))
             {
                 DefendingPlayer?.TakeCards(CardsOnTheTable.Select(c => c.AttackingCard).ToList());
                 DefendingPlayer?.TakeCards(CardsOnTheTable.Where(c => c.DefendingCard != null)
                                          .Select(c => c.DefendingCard)
                                          .ToList()!);
-                CardsOnTheTable.Clear();
+                wasDefendingPlayerSuccessful = false;
             }
 
+            CardsOnTheTable.Clear();
             DrawMissingCardsAfterRound();
             RoundStarted = false;
-            // need to change attacking player, defending player becomes attackign player
+            AssignNewAttackingPlayer(wasDefendingPlayerSuccessful);
         }
 
         internal void FirstAttack(Player player, List<Card> cards)
@@ -261,6 +258,24 @@ namespace Fool.Core.Models
                     player.TakeCard(Deck.PullCard());
                 }
             }
+        }
+
+        private void AssignNewAttackingPlayer(bool wasDefendingPlayerSuccessful)
+        {
+            // The logic is that when defending player fails to defend, he cant become attacking player next round
+            var attackingPlayerIndex = Players.IndexOf(_attackingPlayer);
+            attackingPlayerIndex++;
+            var defendingPlayerIndex = Players.IndexOf(DefendingPlayer);
+            if (defendingPlayerIndex.Equals(attackingPlayerIndex))
+                attackingPlayerIndex++;
+
+            if (attackingPlayerIndex >= Players.Count)
+            {
+                attackingPlayerIndex = 0;
+                if (defendingPlayerIndex.Equals(_attackingPlayer))
+                    attackingPlayerIndex++;
+            }
+            _attackingPlayer = Players[attackingPlayerIndex];
         }
     }
 }

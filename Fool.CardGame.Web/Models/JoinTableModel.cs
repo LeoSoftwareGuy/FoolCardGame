@@ -3,6 +3,5 @@
     public class JoinTableModel : AuthModel
     {
         public string PlayerName { get; set; }
-        public Guid TableGuid { get; set; }
     }
 }
