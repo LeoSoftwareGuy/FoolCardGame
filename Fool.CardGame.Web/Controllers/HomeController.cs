@@ -74,6 +74,12 @@ namespace Fool.CardGame.Web.Controllers
             _tableService.SurrenderCurrentRound(model.TableId, model.PlayerSecret);
         }
 
+        [HttpPost]
+        public void EndRound([FromBody]AuthModel model)
+        {
+            _tableService.EndCurrentRound(model.TableId, model.PlayerSecret);
+        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

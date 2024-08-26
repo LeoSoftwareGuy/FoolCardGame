@@ -42,17 +42,6 @@ namespace Fool.Core.Services
                 {
                     table.Owner = player;
                 }
-
-                //var debug = false;
-                //if (debug)
-                //{
-                //    table.Game.AddPlayer("1 Elmaz");
-                //    table.Game.AddPlayer("2 Lets Check This Long Name Out");
-                //    //table.Game.AddPlayer("3 Bob");
-                //    //table.Game.AddPlayer("4 Vincent");
-                //    table.Game.PrepareForTheGame();
-                //    // table.Game.AttackingPlayer!.FirstAttack([2]);
-                //}
             }
             else
             {
@@ -93,6 +82,7 @@ namespace Fool.Core.Services
                         Id = playerTable!.Id,
                         MyIndex = playerTable.Game.Players.IndexOf(player!),
                         ActivePlayerIndex = playerTable.Game.Players.IndexOf(playerTable.Game.AttackingPlayer!),
+                        AttackingSecretKey = playerTable.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == playerTable.Game.AttackingPlayer).Key,
                         PlayerHand = player.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
                         DeckCardsCount = playerTable.Game.Deck.CardsCount,
                         Trump = playerTable.Game.Deck.TrumpCard != null
@@ -189,6 +179,31 @@ namespace Fool.Core.Services
             else
             {
                 throw new FoolExceptions("You can only surrender if you are defending");
+            }
+        }
+
+        public void EndCurrentRound(Guid tableId, string playerSecret)
+        {
+            var table = TablesWithGames[tableId];
+            var player = table.PlayersAndTheirSecretKeys[playerSecret];
+
+            if (table == null || player == null)
+            {
+                throw new FoolExceptions("Player or player table is not found");
+            }
+
+            if (!table.Game.CardsOnTheTable.All(c => c.DefendingCard != null))
+            {
+                throw new FoolExceptions("All Cards on the table should be defended");
+            }
+
+            if (table.Game.AttackingPlayer == player)
+            {
+                table.Game.FinishTheRound();
+            }
+            else
+            {
+                throw new FoolExceptions("Only player who attacked first can finish the round");
             }
         }
 

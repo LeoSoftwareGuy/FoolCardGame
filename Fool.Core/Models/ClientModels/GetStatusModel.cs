@@ -21,6 +21,7 @@ namespace Fool.CardGame.Web.Models
             public string? Status { get; set; }
             public string? OwnerSecretKey { get; set; }
             public string? DefenderSecretKey { get; set; }
+            public string? AttackingSecretKey { get; set; }
         }
 
         public class CardModel

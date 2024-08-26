@@ -265,23 +265,22 @@ namespace Fool.Core.Models
             var attackingPlayerIndex = Players.IndexOf(_attackingPlayer);
             var defendingPlayerIndex = Players.IndexOf(DefendingPlayer);
 
-            attackingPlayerIndex++;
-            if (attackingPlayerIndex >= Players.Count)
-            {
-                attackingPlayerIndex = 0;
-            }
 
-            // If the defending player failed to defend, ensure they are not the next attacker
-            if (!wasDefendingPlayerSuccessful && attackingPlayerIndex == defendingPlayerIndex)
+            if (wasDefendingPlayerSuccessful)
             {
                 attackingPlayerIndex++;
-                if (attackingPlayerIndex >= Players.Count)
-                {
-                    attackingPlayerIndex = 0;
-                }
+            }
+            else
+            {
+                attackingPlayerIndex += 2;
             }
 
-            // Set the new attacking player
+
+            if (attackingPlayerIndex >= Players.Count)
+            {
+                attackingPlayerIndex = attackingPlayerIndex - Players.Count;
+            }
+
             _attackingPlayer = Players[attackingPlayerIndex];
         }
 

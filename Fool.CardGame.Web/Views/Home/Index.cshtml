@@ -24,10 +24,11 @@
     <button id="startGame" class="btn btn-info hidden" onclick="startGame()">Start Game</button>
     <div id="playingCardsContainer">
         <div id="playingCards"></div>
-        <div>
-            <button id="playingCards_btn_attack" class="btn btn-light hidden" onclick="makeAMove()">Make A Move</button>
+        <div class="playingCards__actions">
+            <button id="playingCards_btn_attack" class="btn btn-light hidden" onclick="makeAMove()">Attack</button>
             <button id="playingCards_btn_defend" class="btn btn-light hidden" onclick="defend()">Defend</button>
             <button id="playingCards_btn_surrender" class="btn btn-light hidden" onclick="surrender()">Surrender</button>
+            <button id="playingCards_btn_endRound" class="btn btn-light hidden" onclick="endRound()">End Round</button>
         </div>
     </div>
     <div id="field"></div>
@@ -245,6 +246,7 @@
                     drawPlayersAndTheirHands(status);
                     drawGameStatus(status);
                     drawSurrenderButton(status);
+                    drawEndRoundButton(status);
                 }
             },
             error: function (data) {
@@ -426,10 +428,25 @@
         }
     }
 
+    function drawEndRoundButton(status) {
+        // So it must be attacking player, there should cards on the table and all cards should be defended
+        //TODO all attacking players must agree to finish the round, it should not be decided by 1 player
+        if (user.secret == gameStatus.table.attackingSecretKey && status.table.cardsOnTheTable.length > 0) {
+            let cardsOnTheTable = status.table.cardsOnTheTable;
+            let attackingCardsCount = cardsOnTheTable.filter(card => card.attackingCard).length;
+            let defendingCardsCount = cardsOnTheTable.filter(card => card.defendingCard).length;
+
+            if (attackingCardsCount == defendingCardsCount) {
+                document.getElementById('playingCards_btn_endRound').classList.remove('hidden');
+            }
+        }
+    }
+
+
     function checkMoves() {
-        // shows move button to attack if hand cards are selected
+        // shows move button to attack if hand cards are selected and if there not more than 5 cards on the table.
         let activeCardsOnTheHand = document.querySelectorAll('#playingCardsContainer .playingCard.active');
-        if (activeCardsOnTheHand.length > 0 && user.secret != gameStatus.table.defenderSecretKey) {
+        if (activeCardsOnTheHand.length > 0 && user.secret != gameStatus.table.defenderSecretKey && gameStatus.table.cardsOnTheTable.length < 6) {
             document.getElementById('playingCards_btn_attack').classList.remove('hidden');
         } else {
             document.getElementById('playingCards_btn_attack').classList.add('hidden');
@@ -489,6 +506,23 @@
             },
             error: function (data) {
                 alert("Surrender method did not work");
+            }
+        });
+    }
+
+    function endRound() {
+        SendRequest({
+            method: 'POST',
+            url: '/Home/EndRound',
+            body: {
+                tableId: gameStatus.table.id,
+                playerSecret: user.secret
+            },
+            success: function (data) {
+                getStatus();
+            },
+            error: function (data) {
+                alert("EndRound method did not work");
             }
         });
     }
@@ -633,10 +667,7 @@
         align-items: center;
         justify-content: center;
     }
-
-    #playingCards_btn_attack {
-        margin-top: 1rem;
-    }
+   
 
     #playingCardsContainer {
         margin-top: 3rem;
@@ -655,6 +686,14 @@
         align-items: center;
         column-gap: 0.2rem;
         flex-wrap: wrap;
+    }
+
+    .playingCards__actions {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        column-gap: 0.5rem;
     }
 
     .playingCard {

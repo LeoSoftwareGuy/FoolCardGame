@@ -11,6 +11,7 @@ namespace Fool.Core.Services.Interfaces
         void Attack(Guid tableId, string playerSecret, int[] cardIds);
         void StartGame(Guid tableId, string playerSecret);
         void SurrenderCurrentRound(Guid tableId, string playerSecret);
+        void EndCurrentRound(Guid tableId, string playerSecret);
         void Defend(Guid tableId, string playerSecret, int defendingCardIndex, int attackingCardIndex);
         GetStatusModel GetStatus(string playerSecret);
     }
