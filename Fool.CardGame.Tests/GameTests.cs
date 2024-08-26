@@ -2,6 +2,7 @@
 using Fool.Core.Models;
 using Fool.Core.Models.Cards;
 using Fool.Core.Models.Table;
+using NuGet.Frameworks;
 using NUnit.Framework.Constraints;
 
 namespace Fool.CardGame.Tests
@@ -135,7 +136,7 @@ namespace Fool.CardGame.Tests
             game.Deck.Shuffle();
             game.PrepareForTheGame();
             game.AttackingPlayer?.FirstAttack([0]);
-            game.DefendingPlayer?.Defend(0, game.CardsOnTheTable.FirstOrDefault(c => c.DefendingCard == null).Id);
+            game.DefendingPlayer?.Defend(0, 0);
             game.FinishTheRound();
 
 
@@ -162,13 +163,13 @@ namespace Fool.CardGame.Tests
             var defendingPlayer = game.DefendingPlayer;
 
             attackingPlayer?.FirstAttack([0]);
-            defendingPlayer.Defend(3, game.CardsOnTheTable.FirstOrDefault(c => c.DefendingCard == null).Id);
+            defendingPlayer.Defend(3, 0);
             secondAttackingPlayer.Attack([1]);
 
             game.FinishTheRound();
 
             Assert.That(game.AttackingPlayer!.Hand.Count, Is.EqualTo(6));
-            Assert.That(game.DefendingPlayer!.Hand.Count, Is.EqualTo(8));
+            Assert.That(defendingPlayer!.Hand.Count, Is.EqualTo(8));
             Assert.That(game.Deck.CardsCount, Is.EqualTo(36 - 6 - 6 - 6 - 2));
         }
 
@@ -193,15 +194,17 @@ namespace Fool.CardGame.Tests
             game.AttackingPlayer.FirstAttack([2, 3]);
 
             var startingDefensiveCardIndex = 3;
+            var startingAttackingCardIndex = 0;
             foreach (var attackingCard in game.CardsOnTheTable.Where(c => c.DefendingCard == null).ToList())
             {
-                game.DefendingPlayer.Defend(startingDefensiveCardIndex, attackingCard.Id);
+                game.DefendingPlayer.Defend(startingDefensiveCardIndex, startingAttackingCardIndex);
                 startingDefensiveCardIndex--;
+                startingAttackingCardIndex++;
             }
 
             game.AttackingPlayer.Attack([3]);
             var attackingCardIndex = game.CardsOnTheTable.FirstOrDefault(c => c.DefendingCard == null).Id;
-            game.DefendingPlayer.Defend(3, attackingCardIndex);
+            game.DefendingPlayer.Defend(3, 2);
 
             game.FinishTheRound();
 
@@ -227,7 +230,7 @@ namespace Fool.CardGame.Tests
 
             }, "6♦"));
 
-   
+
             game.Deck.Shuffle();
             game.PrepareForTheGame();
 
@@ -245,6 +248,51 @@ namespace Fool.CardGame.Tests
             Assert.That(defendingPlayer.Hand.Count, Is.EqualTo(6 + 4));
             Assert.That(game.Deck.CardsCount, Is.EqualTo(36 - 6 * 3 - 4));
         }
+
+
+        [Test]
+        public void Game_CorrectChangeOfAttackingPlayersWhenDefenceWasSuccessful()
+        {
+            var game = new Game();
+            game.AddPlayer("1");
+            game.AddPlayer("2");
+
+            game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
+            {
+                "A♠,Q♦,Q♣,Q♥,10♥,7♦",
+                "Q♠,A♦,A♣,A♥,10♣,10♠"
+             }, "6♦"));
+
+            game.PrepareForTheGame();
+            var attackingPlayerName = game.AttackingPlayer.Name;
+            game.AttackingPlayer.FirstAttack([1]);
+            game.DefendingPlayer.Defend(2, 0);
+            game.FinishTheRound();
+
+            Assert.That(game.DefendingPlayer.Name, Is.EqualTo(attackingPlayerName));
+        }
+
+        [Test]
+        public void Game_CorrectChangeOfAttackingPlayersWhenDefenceWasNotSuccessful()
+        {
+            var game = new Game();
+            game.AddPlayer("1");
+            game.AddPlayer("2");
+
+            game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
+            {
+                "A♠,Q♦,Q♣,Q♥,10♥,7♦",
+                "Q♠,A♦,A♣,A♥,10♣,10♠"
+             }, "6♦"));
+
+            game.PrepareForTheGame();
+            var attackingPlayerName = game.AttackingPlayer.Name;
+            game.AttackingPlayer.FirstAttack([1]);
+            game.FinishTheRound();
+
+            Assert.That(game.AttackingPlayer.Name, Is.EqualTo(attackingPlayerName));
+        }
+
         private Card GetPlayersLowestTrumpCard(Player player, Card trumpCard)
         {
             if (player == null || trumpCard == null)

@@ -262,20 +262,28 @@ namespace Fool.Core.Models
 
         private void AssignNewAttackingPlayer(bool wasDefendingPlayerSuccessful)
         {
-            // The logic is that when defending player fails to defend, he cant become attacking player next round
             var attackingPlayerIndex = Players.IndexOf(_attackingPlayer);
-            attackingPlayerIndex++;
             var defendingPlayerIndex = Players.IndexOf(DefendingPlayer);
-            if (defendingPlayerIndex.Equals(attackingPlayerIndex))
-                attackingPlayerIndex++;
 
+            attackingPlayerIndex++;
             if (attackingPlayerIndex >= Players.Count)
             {
                 attackingPlayerIndex = 0;
-                if (defendingPlayerIndex.Equals(_attackingPlayer))
-                    attackingPlayerIndex++;
             }
+
+            // If the defending player failed to defend, ensure they are not the next attacker
+            if (!wasDefendingPlayerSuccessful && attackingPlayerIndex == defendingPlayerIndex)
+            {
+                attackingPlayerIndex++;
+                if (attackingPlayerIndex >= Players.Count)
+                {
+                    attackingPlayerIndex = 0;
+                }
+            }
+
+            // Set the new attacking player
             _attackingPlayer = Players[attackingPlayerIndex];
         }
+
     }
 }
