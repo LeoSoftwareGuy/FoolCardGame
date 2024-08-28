@@ -4,6 +4,7 @@ using Fool.Core.Models.Cards;
 using Fool.Core.Models.Table;
 using NuGet.Frameworks;
 using NUnit.Framework.Constraints;
+using System.Numerics;
 
 namespace Fool.CardGame.Tests
 {
@@ -280,10 +281,10 @@ namespace Fool.CardGame.Tests
             game.AddPlayer("2");
 
             game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
-            {
+              {
                 "A♠,Q♦,Q♣,Q♥,10♥,7♦",
                 "Q♠,A♦,A♣,A♥,10♣,10♠"
-             }, "6♦"));
+              }, "6♦"));
 
             game.PrepareForTheGame();
             var attackingPlayerName = game.AttackingPlayer.Name;
@@ -293,6 +294,183 @@ namespace Fool.CardGame.Tests
             Assert.That(game.AttackingPlayer.Name, Is.EqualTo(attackingPlayerName));
         }
 
+        [Test]
+        public void Game_RoundIsNotFinishedBecauseOnlyOnePlayerWantsTo()
+        {
+            var game = new Game();
+            game.AddPlayer("1");
+            game.AddPlayer("2");
+            game.AddPlayer("3");
+
+            game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
+               {
+                "A♠,Q♦,Q♣,Q♥,10♥,7♦",
+                "Q♠,A♦,A♣,A♥,10♣,10♠",
+                "J♠,J♦,J♣,J♥,9♣,9♠"
+
+               }, "6♦"));
+
+            game.PrepareForTheGame();
+
+            var deckCount = game.Deck.CardsCount;
+            var firstAttackingPlayer = game.AttackingPlayer;
+            var defendingPlayer = game.DefendingPlayer;
+            var secondAttackingPlayer = game.Players[1];
+
+            firstAttackingPlayer.FirstAttack([1]);
+            defendingPlayer.Defend(2, 0);
+
+            firstAttackingPlayer.WantsToFinishTheRound();
+            if (IfAllAttackingPlayersWantToFinishTheRound(game))
+            {
+                game.FinishTheRound();
+                game.RefreshTheRound();
+            }
+
+            var anotherDeckCount = game.Deck.CardsCount;
+            Assert.That(deckCount, Is.EqualTo(anotherDeckCount));
+        }
+
+
+
+        [Test]
+        public void Game_RoundIsFinished_AllAttackingPlayersWantToFinish()
+        {
+            var game = new Game();
+            game.AddPlayer("1");
+            game.AddPlayer("2");
+            game.AddPlayer("3");
+
+            game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
+               {
+                "A♠,Q♦,Q♣,Q♥,10♥,7♦",
+                "Q♠,A♦,A♣,A♥,10♣,10♠",
+                "J♠,J♦,J♣,J♥,9♣,9♠"
+
+               }, "6♦"));
+
+            game.PrepareForTheGame();
+
+            var deckCount = game.Deck.CardsCount;
+            var firstAttackingPlayer = game.AttackingPlayer;
+            var defendingPlayer = game.DefendingPlayer;
+            var secondAttackingPlayer = game.Players[1];
+
+            firstAttackingPlayer.FirstAttack([1]);
+            defendingPlayer.Defend(2, 0);
+
+            firstAttackingPlayer.WantsToFinishTheRound();
+            secondAttackingPlayer.WantsToFinishTheRound();
+            if (IfAllAttackingPlayersWantToFinishTheRound(game))
+            {
+                game.FinishTheRound();
+                game.RefreshTheRound();
+            }
+
+            var anotherDeckCount = game.Deck.CardsCount;
+            Assert.That(deckCount, Is.Not.EqualTo(anotherDeckCount));
+        }
+
+
+        [Test]
+        public void Game_RoundIsNotFinished_OnePlayerAttacksAfterOtherPlayersWantToFinish()
+        {
+            var game = new Game();
+            game.AddPlayer("1");
+            game.AddPlayer("2");
+            game.AddPlayer("3");
+            game.AddPlayer("4");
+
+            game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
+               {
+                "A♠,Q♦,Q♣,Q♥,10♥,7♦", // Attacking game.Players[3]
+                "Q♠,A♦,A♣,A♥,10♣,10♠", 
+                "J♠,J♦,J♣,J♥,9♣,9♠",
+                "6♠,8♦,8♣,6♥,10♦,9♦" //Defending  game.Players[1]
+
+               }, "6♦"));
+
+            game.PrepareForTheGame();
+
+            var deckCount = game.Deck.CardsCount;
+            var firstAttackingPlayer = game.AttackingPlayer;
+            var defendingPlayer = game.DefendingPlayer;
+            var secondAttackingPlayer = game.Players[2];
+            var thirdAttackingPlayer = game.Players[1];
+
+            firstAttackingPlayer.FirstAttack([1]);
+            defendingPlayer.Defend(0, 0);
+
+            firstAttackingPlayer.WantsToFinishTheRound();
+            secondAttackingPlayer.WantsToFinishTheRound();
+
+            thirdAttackingPlayer.Attack([0]);
+            if (IfAllAttackingPlayersWantToFinishTheRound(game))
+            {
+                game.FinishTheRound();
+                game.RefreshTheRound();
+            }
+
+            var anotherDeckCount = game.Deck.CardsCount;
+            Assert.That(deckCount, Is.EqualTo(anotherDeckCount));
+        }
+
+
+
+        [Test]
+        public void Game_RoundIsFinished_OnePlayerAttacksAfterOtherPlayersWantToFinish_CardsIsDefended_ThenAllWantToFinish()
+        {
+            var game = new Game();
+            game.AddPlayer("1");
+            game.AddPlayer("2");
+            game.AddPlayer("3");
+            game.AddPlayer("4");
+
+            game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
+               {
+                "A♠,Q♦,Q♣,Q♥,10♥,7♦", // Attacking game.Players[3]
+                "Q♠,A♦,A♣,A♥,10♣,10♠",
+                "J♠,J♦,J♣,J♥,9♣,9♠",  // 3rd attacking player
+                "6♠,8♦,8♣,6♥,10♦,9♦" //Defending  game.Players[1]
+
+               }, "6♦"));
+
+            game.PrepareForTheGame();
+
+            var deckCount = game.Deck.CardsCount;
+            var firstAttackingPlayer = game.AttackingPlayer;
+            var defendingPlayer = game.DefendingPlayer;
+            var secondAttackingPlayer = game.Players[2];
+            var thirdAttackingPlayer = game.Players[1];
+
+            firstAttackingPlayer.FirstAttack([1]);
+            defendingPlayer.Defend(0, 0);
+
+            firstAttackingPlayer.WantsToFinishTheRound();
+            secondAttackingPlayer.WantsToFinishTheRound();
+
+            thirdAttackingPlayer.Attack([0]);
+            defendingPlayer.Defend(0, 1);
+
+            firstAttackingPlayer.WantsToFinishTheRound();
+            secondAttackingPlayer.WantsToFinishTheRound();
+            thirdAttackingPlayer.WantsToFinishTheRound();
+            if (IfAllAttackingPlayersWantToFinishTheRound(game))
+            {
+                game.FinishTheRound();
+                game.RefreshTheRound();
+            }
+
+            var anotherDeckCount = game.Deck.CardsCount;
+            Assert.That(deckCount, Is.Not.EqualTo(anotherDeckCount));
+        }
+
+
+
+        private bool IfAllAttackingPlayersWantToFinishTheRound(Game game)
+        {
+            return game.Players.Where(player => player != game.DefendingPlayer).All(player => player.WantsToFinishRound);
+        }
         private Card GetPlayersLowestTrumpCard(Player player, Card trumpCard)
         {
             if (player == null || trumpCard == null)

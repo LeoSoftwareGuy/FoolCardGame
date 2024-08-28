@@ -7,6 +7,7 @@ namespace Fool.Core.Models
     public class Player
     {
         private Game _game;
+        private bool _wantsToFinishRound;
         public Player()
         {
 
@@ -16,11 +17,26 @@ namespace Fool.Core.Models
             Name = name;
             Hand = new List<Card>();
             _game = game;
+            _wantsToFinishRound = false;
         }
 
         public string Name { get; }
         public List<Card> Hand { get; }
+        public bool WantsToFinishRound
+        {
+            get => _wantsToFinishRound;
+            private set => _wantsToFinishRound = value;
+        }
 
+        public void WantsToFinishTheRound()
+        {
+            _wantsToFinishRound = true;
+        }
+
+        public void RefreTheRound()
+        {
+            _wantsToFinishRound = false;
+        }
 
         public void TakeCard(Card card)
         {

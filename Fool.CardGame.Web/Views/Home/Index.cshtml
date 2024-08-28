@@ -436,7 +436,7 @@
             let attackingCardsCount = cardsOnTheTable.filter(card => card.attackingCard).length;
             let defendingCardsCount = cardsOnTheTable.filter(card => card.defendingCard).length;
 
-            if (attackingCardsCount == defendingCardsCount) {
+            if (attackingCardsCount == defendingCardsCount && status.table.doIWishToFinishTheRound == false) {
                 document.getElementById('playingCards_btn_endRound').classList.remove('hidden');
             }
         }

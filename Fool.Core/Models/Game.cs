@@ -203,7 +203,13 @@ namespace Fool.Core.Models
         }
 
 
-
+        public void RefreshTheRound()
+        {
+            foreach (var player in Players)
+            {
+                player.RefreTheRound();
+            }
+        }
 
         private Player DecideWhoPlaysFirst()
         {

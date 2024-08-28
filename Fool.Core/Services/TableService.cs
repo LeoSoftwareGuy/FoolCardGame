@@ -81,6 +81,7 @@ namespace Fool.Core.Services
                     {
                         Id = playerTable!.Id,
                         MyIndex = playerTable.Game.Players.IndexOf(player!),
+                        DoIWishToFinishTheRound = player!.WantsToFinishRound,
                         ActivePlayerIndex = playerTable.Game.Players.IndexOf(playerTable.Game.AttackingPlayer!),
                         AttackingSecretKey = playerTable.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == playerTable.Game.AttackingPlayer).Key,
                         PlayerHand = player.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
@@ -90,7 +91,7 @@ namespace Fool.Core.Services
                                                                 : null,
                         CardsOnTheTable = playerTable.Game.CardsOnTheTable.Select(c => new GetStatusModel.TableCardModel(c)).ToArray(),
                         Players = playerTable.Game.Players.Where(p => p != player)
-                                                          .Select((c, i) => new GetStatusModel.PlayerModel { Index = i, Name = c.Name, CardsCount = c.Hand.Count })
+                                                          .Select((c, i) => new GetStatusModel.PlayerModel { Index = i, Name = c.Name, CardsCount = c.Hand.Count, WantsToFinishRound = c.WantsToFinishRound })
                                                           .ToArray(),
                         Status = playerTable.Game.GameStatus != null
                                                              ? playerTable.Game.GameStatus.ToString()
@@ -141,10 +142,12 @@ namespace Fool.Core.Services
             if (playerTable.Game.RoundStarted)
             {
                 player.Attack(cardIds);
+                playerTable.Game.RefreshTheRound();
             }
             else
             {
                 player.FirstAttack(cardIds);
+                playerTable.Game.RefreshTheRound();
             }
         }
 
@@ -197,13 +200,25 @@ namespace Fool.Core.Services
                 throw new FoolExceptions("All Cards on the table should be defended");
             }
 
-            if (table.Game.AttackingPlayer == player)
+            if (player == table.Game.DefendingPlayer)
+            {
+                throw new FoolExceptions("Only attacking player can finish the round");
+            }
+
+            if (player.WantsToFinishRound)
+            {
+                throw new FoolExceptions("You have already finished the round!");
+            }
+
+            // We set the current player prop that he want to finish the round, then we check other attacking players,
+            // if they all want to finish the round , then we actually finish
+            // otherwise nothing happens appart from setting the prop.
+
+            player.WantsToFinishTheRound();
+            if (IfAllAttackingPlayersWantToFinishTheRound(table))
             {
                 table.Game.FinishTheRound();
-            }
-            else
-            {
-                throw new FoolExceptions("Only player who attacked first can finish the round");
+                table.Game.RefreshTheRound();          
             }
         }
 
@@ -225,5 +240,9 @@ namespace Fool.Core.Services
             return table.PlayersAndTheirSecretKeys.Values.Count == 1;
         }
 
+        private bool IfAllAttackingPlayersWantToFinishTheRound(Table table)
+        {
+            return table.Game.Players.Where(player => player != table.Game.DefendingPlayer).All(player => player.WantsToFinishRound);
+        }
     }
 }
