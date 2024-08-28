@@ -166,7 +166,6 @@
     }
 
     function sitToTheTableClick(element) {
-        debugger;
         let tableId = element.closest('.playingTable').getAttribute('table-id');
         sitToTheTable(tableId);
     }
@@ -183,6 +182,7 @@
             },
             success: function (data) {
                 getStatus()
+                window.location.reload();
             },
             error: function (data) {
                 alert("Something went wrong during creating of table")
@@ -200,6 +200,7 @@
             },
             success: function (data) {
                 getStatus();
+                window.location.reload();
             },
             error: function (data) {
                 alert("Attack method did not work")
@@ -212,6 +213,7 @@
             method: 'GET',
             url: '/Home/GetStatus?playerSecret=' + user.secret,
             success: function (data) {
+                debugger;
                 let status = JSON.parse(data.responseText);
                 gameStatus = status;
                 // clear hand, deck and trump cards to refresh the state
@@ -430,7 +432,7 @@
 
     function drawEndRoundButton(status) {
         // So it must be attacking player, there should cards on the table and all cards should be defended
-        //TODO all attacking players must agree to finish the round, it should not be decided by 1 player
+        //all attacking players must agree to finish the round, it should not be decided by 1 player
         if (user.secret == gameStatus.table.attackingSecretKey && status.table.cardsOnTheTable.length > 0) {
             let cardsOnTheTable = status.table.cardsOnTheTable;
             let attackingCardsCount = cardsOnTheTable.filter(card => card.attackingCard).length;
@@ -466,7 +468,6 @@
 
 
     function defend() {
-        debugger;
         let defendingCard = document.querySelector('#playingCards .playingCard.active');
         let attackingCard = document.querySelector('#field .playingCard.active');
 
@@ -485,6 +486,7 @@
                 },
                 success: function (data) {
                     getStatus();
+                    window.location.reload();
                 },
                 error: function (data) {
                     alert("Attack method did not work");
@@ -503,6 +505,7 @@
             },
             success: function (data) {
                 getStatus();
+                window.location.reload();
             },
             error: function (data) {
                 alert("Surrender method did not work");
@@ -520,6 +523,7 @@
             },
             success: function (data) {
                 getStatus();
+                window.location.reload();
             },
             error: function (data) {
                 alert("EndRound method did not work");
@@ -548,6 +552,7 @@
                 },
                 success: function (data) {
                     getStatus();
+                    window.location.reload();
                 },
                 error: function (data) {
                     alert("Attack method did not work")

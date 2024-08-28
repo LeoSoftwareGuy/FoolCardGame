@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<ITableService, TableService>();
+builder.Services.AddHostedService<BackgroundGameService>();
 
 var app = builder.Build();
 

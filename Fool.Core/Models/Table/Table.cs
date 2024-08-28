@@ -9,5 +9,8 @@
         public Game Game { get; set; }
         public Dictionary<string, Player> PlayersAndTheirSecretKeys { get; set; }
         public Player Owner { get; set; }
+
+       
+        public DateTime? RoundWasStoppedAt { get; set; }
     }
 }
