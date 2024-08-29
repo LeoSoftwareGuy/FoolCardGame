@@ -8,10 +8,12 @@ namespace Fool.Core.Services
 {
     public class TableService : ITableService
     {
+        private readonly INotificationService _notificationService;
         public Dictionary<Guid, Table> TablesWithGames { get; private set; }
-        public TableService()
+        public TableService(INotificationService notificationService)
         {
             TablesWithGames = new Dictionary<Guid, Table>();
+            _notificationService = notificationService;
         }
 
         public Guid CreateTable()
@@ -149,14 +151,14 @@ namespace Fool.Core.Services
                 }
                 else
                 {
-                    player.FirstAttack(cardIds);                 
+                    player.FirstAttack(cardIds);
                 }
                 table.Game.RefreshTheRound();
             }
             else
             {
                 throw new Exception("There can only be 6 attacking cards on the table");
-            }      
+            }
         }
 
         public void Defend(Guid tableId, string playerSecret, int defendingCardIndex, int attackingCardIndex)
@@ -259,12 +261,18 @@ namespace Fool.Core.Services
                 {
                     // basically here we are checking if the 5 seconds have passed since the round was stopped
                     var shouldFinishAt = table.RoundWasStoppedAt.Value.AddSeconds(5);
+                    var amountOfTimeRemaining = (DateTime.UtcNow - table.RoundWasStoppedAt.Value).TotalSeconds;
                     if (DateTime.UtcNow >= shouldFinishAt)
                     {
                         table.RoundWasStoppedAt = null;
                         table.Game.FinishTheRound();
 
+                        _notificationService.SendSurrenderFinishedAsync();
                         // would be nice to tell SignalR that the round was finished
+                    }
+                    else
+                    {
+                        _notificationService.SendTimePassedAsync(amountOfTimeRemaining);
                     }
                 }
             }

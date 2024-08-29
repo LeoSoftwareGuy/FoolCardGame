@@ -1,12 +1,13 @@
 using Fool.CardGame.Web.Events.Hubs;
+using Fool.CardGame.Web.Services;
 using Fool.Core.Services;
 using Fool.Core.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<ITableService, TableService>();
+builder.Services.AddSingleton<INotificationService, NotificationService>();
 builder.Services.AddHostedService<BackgroundGameService>();
 
 builder.Services.AddSignalR();

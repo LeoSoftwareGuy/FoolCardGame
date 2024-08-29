@@ -18,3 +18,13 @@ connection.on("StatusUpdate", function (user) {
     getStatus();
 });
 
+connection.on("SurrenderFinished", function () {
+    cleanActionButtons();
+    getStatus();
+});
+
+connection.on("TimePassed", function (message) {
+    // Dont SHow alert, instead just show some sort of timer 
+    alert(message);
+})
+
