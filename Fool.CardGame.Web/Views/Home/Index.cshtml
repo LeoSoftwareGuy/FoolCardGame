@@ -209,14 +209,14 @@
                 tableId: tableId
             },
             success: function (data) {
-                getStatus()
-                window.location.reload();
+                notifyUserBrowsersAboutUpdate();
             },
             error: function (data) {
-                alert("Something went wrong during creating of table")
+                alert("Something went wrong during creating of table");
             }
         });
     }
+
 
     function startGame() {
         SendRequest({
@@ -227,8 +227,7 @@
                 playerSecret: user.secret
             },
             success: function (data) {
-                getStatus();
-                window.location.reload();
+                notifyUserBrowsersAboutUpdate();
             },
             error: function (data) {
                 alert("Attack method did not work")
@@ -513,8 +512,7 @@
                     attackingCardIndex: attackingCardIndex
                 },
                 success: function (data) {
-                    getStatus();
-                    window.location.reload();
+                    notifyUserBrowsersAboutUpdate();
                 },
                 error: function (data) {
                     alert("Attack method did not work");
@@ -532,8 +530,7 @@
                 playerSecret: user.secret
             },
             success: function (data) {
-                getStatus();
-                window.location.reload();
+                notifyUserBrowsersAboutUpdate();
             },
             error: function (data) {
                 alert("Surrender method did not work");
@@ -550,8 +547,7 @@
                 playerSecret: user.secret
             },
             success: function (data) {
-                getStatus();
-                window.location.reload();
+                notifyUserBrowsersAboutUpdate();
             },
             error: function (data) {
                 alert("EndRound method did not work");
@@ -579,8 +575,7 @@
                     cardIds: cardIndexes
                 },
                 success: function (data) {
-                    getStatus();
-                    window.location.reload();
+                    notifyUserBrowsersAboutUpdate();
                 },
                 error: function (data) {
                     alert("Attack method did not work")
@@ -607,10 +602,19 @@
         }
     }
 
+    function cleanActionButtons() {
+        document.getElementById("playingCards_btn_attack").classList.add('hidden');
+        document.getElementById("playingCards_btn_defend").classList.add('hidden');
+        document.getElementById("playingCards_btn_surrender").classList.add('hidden');
+        document.getElementById("playingCards_btn_endRound").classList.add('hidden');
+    }
 
 
-
-
+    function notifyUserBrowsersAboutUpdate() {
+        connection.invoke("UpdateGameState", user.name).catch(function (err) {
+            return console.error(err.toString());
+        });
+    }
 </script>
 <style>
     /* CSS for the hidden class */
@@ -700,7 +704,7 @@
         align-items: center;
         justify-content: center;
     }
-   
+
 
     #playingCardsContainer {
         margin-top: 3rem;
@@ -742,7 +746,7 @@
     .defendingCard {
         margin-top: 2rem;
         position: absolute;
-        top:0;
+        top: 0;
         z-index: 2;
         width: 3rem;
         height: 6rem;

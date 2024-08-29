@@ -4,9 +4,9 @@ namespace Fool.CardGame.Web.Events.Hubs
 {
     public class GameHub : Hub
     {
-        public async Task SendMessage(string user, string message)
+        public async Task UpdateGameState(string user)
         {
-            await Clients.All.SendAsync("StatusUpdate", user, message);
+            await Clients.All.SendAsync("StatusUpdate", user);
         }
     }
 }

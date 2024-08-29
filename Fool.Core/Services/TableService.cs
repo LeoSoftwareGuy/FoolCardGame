@@ -263,6 +263,8 @@ namespace Fool.Core.Services
                     {
                         table.RoundWasStoppedAt = null;
                         table.Game.FinishTheRound();
+
+                        // would be nice to tell SignalR that the round was finished
                     }
                 }
             }
