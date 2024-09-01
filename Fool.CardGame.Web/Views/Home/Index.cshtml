@@ -20,7 +20,12 @@
 
 
 <div id="main" class="hidden">
-    <label id="gameStatus"></label>
+    <div id="currentGame__Info">
+        <label id="currentGame_Info_gameStatus"></label>
+        <label id="currentGame_Info_playerRole"></label>
+        <label id="currentGame_Info_timer"></label>
+    </div>
+
     <button id="startGame" class="btn btn-info hidden" onclick="startGame()">Start Game</button>
     <div id="playingCardsContainer">
         <div id="playingCards"></div>
@@ -35,6 +40,8 @@
     <div id="deck"></div>
     <div id="players"></div>
 </div>
+
+
 
 
 <div class="hidden">
@@ -240,20 +247,14 @@
             method: 'GET',
             url: '/Home/GetStatus?playerSecret=' + user.secret,
             success: function (data) {
-                debugger;
                 let status = JSON.parse(data.responseText);
                 gameStatus = status;
-                // clear hand, deck and trump cards to refresh the state
-                document.getElementById('playingCards').innerHTML = '';
-                document.getElementById('deck').innerHTML = '';
-                document.getElementById('field').innerHTML = '';
-                document.getElementById('tables').innerHTML = '';
-                document.getElementById('players').innerHTML = '';
-                document.getElementById('gameStatus').innerHTML = '';
 
+                resetClientView();
                 if (status.table == null) {
                     drawTables(status);
                 } else {
+                    drawGameStatus(status);
                     drawHand(status);
                     if (status.table.trump != null) {
                         let trumpCard = status.table.trump;
@@ -272,8 +273,7 @@
                     }
 
                     drawBattleField(status);
-                    drawPlayersAndTheirHands(status);
-                    drawGameStatus(status);
+                    drawPlayersAndTheirHands(status);                
                     drawSurrenderButton(status);
                     drawEndRoundButton(status);
                 }
@@ -284,6 +284,17 @@
         });
     }
 
+    function resetClientView() {
+        // clear hand, deck and trump cards to refresh the state
+        document.getElementById('playingCards').innerHTML = '';
+        document.getElementById('deck').innerHTML = '';
+        document.getElementById('field').innerHTML = '';
+        document.getElementById('tables').innerHTML = '';
+        document.getElementById('players').innerHTML = '';
+        document.getElementById('currentGame_Info_gameStatus').innerHTML = '';
+        document.getElementById('currentGame_Info_timer').innerHTML = '';
+        document.getElementById('currentGame_Info_playerRole').innerHTML = '';
+    }
 
     function drawHand(status) {
         if (status.table.playerHand.length > 0) {
@@ -430,7 +441,7 @@
 
     function drawGameStatus(status) {
         if (status.table.status != null && status.table.status != undefined) {
-            document.getElementById('gameStatus').innerHTML = status.table.status;
+            document.getElementById('currentGame_Info_gameStatus').innerHTML = status.table.status;
 
             if (status.table.ownerSecretKey != null) {
                 if (status.table.status == 'ReadyToBegin' && user.secret == status.table.ownerSecretKey) {
@@ -438,6 +449,14 @@
                 } else {
                     document.getElementById('startGame').classList.add('hidden');
                 }
+            }
+
+            if (status.table.defenderSecretKey == user.secret) {
+                document.getElementById('currentGame_Info_playerRole').innerHTML = 'Defend';
+            } else if (status.table.attackingSecretKey == user.secret) {
+                document.getElementById('currentGame_Info_playerRole').innerHTML = 'Attack';
+            } else {
+                document.getElementById('currentGame_Info_playerRole').innerHTML = 'Support '
             }
         }
     }
@@ -611,8 +630,8 @@
 
 
     function notifyUserBrowsersAboutUpdate() {
-        connection.invoke("UpdateGameState", user.name).catch(function (err) {
-            return console.error(err.toString());
+        gameHubConnection.invoke("UpdateGameState", user.name).catch(function (err) {
+            return alert(err.toString());
         });
     }
 </script>
@@ -646,11 +665,17 @@
         width: 100%;
     }
 
-    .gameStatus {
+    #currentGame__Info {
         padding: 1rem 1rem;
-        font-size: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1.3rem;
         font-weight: 500;
         text-align: center;
+    }
+
+    .currentGame_Info_gameStatus {
     }
 
     .createTableBtn {
@@ -697,7 +722,7 @@
     }
 
     #deck {
-        margin-top: 4rem;
+        margin-top: 2rem;
         width: 100%;
         display: flex;
         position: relative;
@@ -707,7 +732,7 @@
 
 
     #playingCardsContainer {
-        margin-top: 3rem;
+        margin-top: 1rem;
         width: 100%;
         max-width: 1100px;
         display: flex;
@@ -863,6 +888,9 @@
 
     .player.active .player__img {
         border: 2px solid blue;
+    }
+
+    #timer {
     }
 
 </style>

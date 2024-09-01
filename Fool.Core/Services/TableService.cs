@@ -272,7 +272,7 @@ namespace Fool.Core.Services
                     }
                     else
                     {
-                        _notificationService.SendTimePassedAsync(amountOfTimeRemaining);
+                        _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining));
                     }
                 }
             }

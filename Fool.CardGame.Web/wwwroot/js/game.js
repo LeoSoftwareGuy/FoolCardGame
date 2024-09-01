@@ -1,9 +1,9 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/gameHub").build();
+var gameHubConnection = new signalR.HubConnectionBuilder().withUrl("/gameHub").build();
 
 // Start the connection
-connection.start().then(function () {
+gameHubConnection.start().then(function () {
     console.log("SignalR connection established!");
 
 }).catch(function (err) {
@@ -12,19 +12,17 @@ connection.start().then(function () {
 
 
 // Wait for the message from server
-connection.on("StatusUpdate", function (user) {
-    // in theory all clients should get game status update
+gameHubConnection.on("StatusUpdate", function (user) {
     cleanActionButtons();
     getStatus();
 });
 
-connection.on("SurrenderFinished", function () {
+gameHubConnection.on("SurrenderFinished", function () {
     cleanActionButtons();
     getStatus();
 });
 
-connection.on("TimePassed", function (message) {
-    // Dont SHow alert, instead just show some sort of timer 
-    alert(message);
+gameHubConnection.on("TimePassed", function (message) {
+    document.getElementById("currentGame_Info_timer").innerHTML = message + ' seconds until surrender';
 })
 
