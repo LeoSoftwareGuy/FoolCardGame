@@ -127,6 +127,8 @@ namespace Fool.Core.Models
             DrawMissingCardsAfterRound();
             RoundStarted = false;
             AssignNewAttackingPlayer(wasDefendingPlayerSuccessful);
+            // Check cards in players hand if there are no cards in the deck and no cards on playerhs hand, then he has won.
+            // He is out of the game 
         }
 
         internal void FirstAttack(Player player, List<Card> cards)
