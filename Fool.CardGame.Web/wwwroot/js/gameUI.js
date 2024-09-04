@@ -159,6 +159,8 @@ function getStatus() {
                 drawPlayersAndTheirHands(status);
                 drawSurrenderButton(status);
                 drawEndRoundButton(status);
+
+                
             }
         },
         error: function (data) {

@@ -6,8 +6,8 @@
     <title>@ViewData["Title"] - Fool Card Game</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Fool.CardGame.Web.styles.css" asp-append-version="true" />
-    <script src="~/js/site.js" asp-append-version="true"></script>
 </head>
 <body>
     <header>
@@ -19,11 +19,6 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                   @*  <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                    </ul> *@
                 </div>
             </div>
         </nav>
@@ -41,6 +36,13 @@
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/events/chat.js" asp-append-version="true"></script>
+    <script src="~/js/events/game.js" asp-append-version="true"></script>
+    <script src="~/js/gameUI.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

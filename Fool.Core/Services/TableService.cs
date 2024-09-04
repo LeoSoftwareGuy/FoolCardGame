@@ -274,7 +274,6 @@ namespace Fool.Core.Services
                         table.Game.FinishTheRound();
 
                         _notificationService.SendSurrenderFinishedAsync();
-                        // would be nice to tell SignalR that the round was finished
                     }
                     else
                     {
