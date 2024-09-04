@@ -145,6 +145,12 @@ namespace Fool.Core.Services
             {
                 cardIds = cardIds.Take(allowedToAddCardsCount).ToArray();
 
+                var defendingPlayerCardsCount = table.Game.DefendingPlayer!.Hand.Count;
+                if (defendingPlayerCardsCount < cardIds.Length)
+                {
+                    throw new FoolExceptions("You cant attack with more cards than the defending player has");
+                }
+
                 if (table.Game.RoundStarted)
                 {
                     player.Attack(cardIds);
@@ -157,7 +163,7 @@ namespace Fool.Core.Services
             }
             else
             {
-                throw new Exception("There can only be 6 attacking cards on the table");
+                throw new FoolExceptions("There can only be 6 attacking cards on the table");
             }
         }
 
