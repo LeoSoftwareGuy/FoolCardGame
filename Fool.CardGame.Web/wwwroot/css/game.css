@@ -46,6 +46,10 @@
     justify-content: center;
 }
 
+.meAsPlayer {
+    position: relative;
+}
+
 .playingTable {
     position: relative;
     min-height: 10rem;
@@ -208,12 +212,17 @@
 
 #players {
     margin: 3rem 0 2rem 0;
+    width:100%;
     text-align: center;
 }
 
 .player {
+    position: relative;
     margin: 2rem 0;
-    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
 }
 
 .player__img {
@@ -254,3 +263,31 @@
 .player.active .player__img {
     border: 2px solid blue;
 }
+
+.player__timer__defending:not(:empty),
+.player__timer__attacking:not(:empty) {
+    padding: .2rem .4rem;
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    font-size: 0.6rem;
+    font-weight: bold;
+    border: 1px solid black;
+    text-align: center;
+    border-radius: 24rem;
+}
+
+.player__timer__defending {
+    left: 63px;
+}
+
+.player__timer__attacking {
+    right: 457px;
+}
+
+    .player__timer__defending:empty,
+    .player__timer__attacking:empty {
+        border: none;
+        padding: 0;
+    }
+

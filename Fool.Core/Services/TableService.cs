@@ -82,9 +82,8 @@ namespace Fool.Core.Services
                     {
                         Id = table!.Id,
                         MyIndex = table.Game.Players.IndexOf(player!),
+                        DefenderIndex = table.Game.Players.IndexOf(table.Game.DefendingPlayer!),
                         DoIWishToFinishTheRound = player!.WantsToFinishRound,
-                        ActivePlayerIndex = table.Game.Players.IndexOf(table.Game.AttackingPlayer!),
-                        AttackingSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.AttackingPlayer).Key,
                         PlayerHand = player.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
                         DeckCardsCount = table.Game.Deck.CardsCount,
                         Trump = table.Game.Deck.TrumpCard != null
@@ -97,10 +96,14 @@ namespace Fool.Core.Services
                         Status = table.Game.GameStatus != null
                                                              ? table.Game.GameStatus.ToString()
                                                              : null,
+                        AttackingSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.AttackingPlayer).Key,
                         OwnerSecretKey = table.Owner != null
-                                                  ? table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Owner).Key
-                                                : null,
-                        DefenderSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.DefendingPlayer).Key
+                                                     ? table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Owner).Key
+                                                     : null,
+                        DefenderSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.DefendingPlayer).Key,
+                        SurrenderHasStarted = table.RoundWasStoppedAt != null
+                                                                      ? true
+                                                                      : false,
                     },
                     Tables = null
                 };
@@ -277,7 +280,7 @@ namespace Fool.Core.Services
                     }
                     else
                     {
-                        _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining));
+                       // _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining));
                     }
                 }
             }

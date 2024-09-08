@@ -152,15 +152,13 @@ function getStatus() {
                 drawTables(status);
             } else {
                 drawGameStatus(status);
-                drawYourself();
+                drawYourself(status);
                 drawHand(status);
                 drawDeckAndTrumpCard(status);
                 drawBattleField(status);
                 drawPlayersAndTheirHands(status);
                 drawSurrenderButton(status);
                 drawEndRoundButton(status);
-
-                
             }
         },
         error: function (data) {
@@ -178,7 +176,6 @@ function resetClientView() {
     document.getElementById('tables').innerHTML = '';
     document.getElementById('players').innerHTML = '';
     document.getElementById('currentGame_Info_gameStatus').innerHTML = '';
-    document.getElementById('currentGame_Info_timer').innerHTML = '';
     document.getElementById('currentGame_Info_playerRole').innerHTML = '';
 }
 function drawTables(status) {
@@ -229,7 +226,7 @@ function drawGameStatus(status) {
 
     }
 }
-function drawYourself() {
+function drawYourself(status) {
     let existingPlayerDiv = document.getElementById('yourPlayerDiv');
     if (existingPlayerDiv) {
         existingPlayerDiv.remove();
@@ -238,6 +235,10 @@ function drawYourself() {
     let yourPlayerDiv = document.getElementsByClassName('meAsPlayer')[0].cloneNode(true);
     yourPlayerDiv.getElementsByClassName('player__name')[0].innerHTML = user.name;
     yourPlayerDiv.getElementsByClassName('player__name')[0].title = user.name;
+
+    if (status.table.surrenderHasStarted && status.table.defenderSecretKey == user.secret) {
+        yourPlayerDiv.getElementsByClassName('player__timer__defending')[0].innerHTML = 'I am surrendering!!';
+    }
     document.getElementById('yourPlayer').appendChild(yourPlayerDiv);
 }
 function drawHand(status) {
@@ -349,9 +350,13 @@ function drawPlayersAndTheirHands(status) {
 
     for (let i = 0; i < playerIndexes.length; i++) {
         let playerIndex = playerIndexes[i].index;
+        let gameIndex = playerIndexes[i].gameIndex;
         let player = status.table.players[playerIndex];
         let playerDiv = originalPlayerDiv.cloneNode(true);
 
+        if (gameIndex == status.table.defenderIndex && status.table.surrenderHasStarted) {
+            playerDiv.getElementsByClassName('player__timer__attacking')[0].innerHTML = 'I am surrendering!!'
+        }
         playerDiv.getElementsByClassName('player__name')[0].innerHTML = player.name;
         playerDiv.getElementsByClassName('player__name')[0].title = player.name;
         // Clear any previous cards in this playerDiv
