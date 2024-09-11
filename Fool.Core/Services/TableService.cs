@@ -112,12 +112,7 @@ namespace Fool.Core.Services
 
         public void StartGame(Guid tableId, string playerSecret)
         {
-            var table = TablesWithGames[tableId];
-            var player = table.PlayersAndTheirSecretKeys[playerSecret];
-            if (table == null || player == null)
-            {
-                throw new FoolExceptions("Either table or player were not found!");
-            }
+            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
 
             if (table.Owner != player)
             {
@@ -132,53 +127,36 @@ namespace Fool.Core.Services
         {
             if (cardIds.Length == 0)
             {
-                throw new FoolExceptions("You cant Attack without providing card ids");
+                throw new FoolExceptions("You can't attack without providing card IDs");
             }
 
-            var table = TablesWithGames[tableId];
-            var player = table == null ? null : table.PlayersAndTheirSecretKeys[playerSecret];
-
-            if (table == null || player == null)
-            {
-                throw new FoolExceptions("Player or player table is not found");
-            }
+            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
 
             var allowedToAddCardsCount = 6 - table.Game.CardsOnTheTable.Count;
-            if (allowedToAddCardsCount > 0)
+            cardIds = cardIds.Take(allowedToAddCardsCount).ToArray();
+
+            var defendingPlayerCardsCount = table.Game.DefendingPlayer!.Hand.Count;
+            if (defendingPlayerCardsCount < cardIds.Length)
             {
-                cardIds = cardIds.Take(allowedToAddCardsCount).ToArray();
+                throw new FoolExceptions("You can't attack with more cards than the defending player has");
+            }
 
-                var defendingPlayerCardsCount = table.Game.DefendingPlayer!.Hand.Count;
-                if (defendingPlayerCardsCount < cardIds.Length)
-                {
-                    throw new FoolExceptions("You cant attack with more cards than the defending player has");
-                }
-
-                if (table.Game.RoundStarted)
-                {
-                    player.Attack(cardIds);
-                }
-                else
-                {
-                    player.FirstAttack(cardIds);
-                }
-                table.Game.RefreshTheRound();
+            if (table.Game.RoundStarted)
+            {
+                player.Attack(cardIds);
             }
             else
             {
-                throw new FoolExceptions("There can only be 6 attacking cards on the table");
+                player.FirstAttack(cardIds);
             }
+
+            table.Game.RefreshTheRound();
         }
+
 
         public void Defend(Guid tableId, string playerSecret, int defendingCardIndex, int attackingCardIndex)
         {
-            var table = TablesWithGames[tableId];
-            var player = table.PlayersAndTheirSecretKeys[playerSecret];
-
-            if (table == null || player == null)
-            {
-                throw new FoolExceptions("Player or player table is not found");
-            }
+            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
 
             if (table.RoundWasStoppedAt != null)
             {
@@ -193,46 +171,25 @@ namespace Fool.Core.Services
 
         public void SurrenderCurrentRound(Guid tableId, string playerSecret)
         {
-            // Here we should check if there are 6 attacking cards on the table
-            // if there are, finish the round
-            // otherwise, start the timer for 10seconds and dont finish the round
-            // during this time other players can attack 
-            // once time is up, finish the round
+            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
 
-            var table = TablesWithGames[tableId];
-            var player = table.PlayersAndTheirSecretKeys[playerSecret];
-
-            if (table == null || player == null)
+            if (table.Game.DefendingPlayer != player)
             {
-                throw new FoolExceptions("Player or player table is not found");
+                throw new FoolExceptions("Only the defending player can surrender.");
             }
 
-            if (table.Game.DefendingPlayer == player)
+            if (table.RoundWasStoppedAt != null)
             {
-                if (table.RoundWasStoppedAt != null)
-                {
-                    throw new FoolExceptions("Round is in the process of stopping!");
-                }
-                else
-                {
-                    table.RoundWasStoppedAt = DateTime.UtcNow;
-                }
+                throw new FoolExceptions("The round is already in the process of stopping!");
             }
-            else
-            {
-                throw new FoolExceptions("You can only surrender if you are defending");
-            }
+
+            table.RoundWasStoppedAt = DateTime.UtcNow;
         }
+
 
         public void EndCurrentRound(Guid tableId, string playerSecret)
         {
-            var table = TablesWithGames[tableId];
-            var player = table.PlayersAndTheirSecretKeys[playerSecret];
-
-            if (table == null || player == null)
-            {
-                throw new FoolExceptions("Player or player table is not found");
-            }
+            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
 
             if (!table.Game.CardsOnTheTable.All(c => c.DefendingCard != null))
             {
@@ -263,28 +220,37 @@ namespace Fool.Core.Services
 
         public void CheckIfRoundWasStopped()
         {
-            //Todo thread safety to be added
             foreach (var table in TablesWithGames.Values)
             {
-                if (table.RoundWasStoppedAt != null)
-                {
-                    // basically here we are checking if the 5 seconds have passed since the round was stopped
-                    var shouldFinishAt = table.RoundWasStoppedAt.Value.AddSeconds(5);
-                    var amountOfTimeRemaining = (DateTime.UtcNow - table.RoundWasStoppedAt.Value).TotalSeconds;
-                    if (DateTime.UtcNow >= shouldFinishAt)
-                    {
-                        table.RoundWasStoppedAt = null;
-                        table.Game.FinishTheRound();
+                if (table.RoundWasStoppedAt == null)
+                    continue;
 
-                        _notificationService.SendSurrenderFinishedAsync();
-                    }
-                    else
-                    {
-                       // _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining));
-                    }
+                if (IsTimeUp(table))
+                {
+                    table.RoundWasStoppedAt = null;
+                    table.Game.FinishTheRound();
+                    _notificationService.SendSurrenderFinishedAsync();
+                }
+                else
+                {
+                    var amountOfTimeRemaining = (DateTime.UtcNow - table.RoundWasStoppedAt.Value).TotalSeconds;
+                    _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining));
                 }
             }
         }
+
+
+        private (Table, Player) GetTableAndPlayer(Guid tableId, string playerSecret)
+        {
+            if (!TablesWithGames.TryGetValue(tableId, out var table))
+                throw new FoolExceptions("Table was not found");
+
+            if (!table.PlayersAndTheirSecretKeys.TryGetValue(playerSecret, out var player))
+                throw new FoolExceptions("Player was not found");
+
+            return (table, player);
+        }
+
 
         private bool CheckIfPlayerIsAlreadyPlayingOnAnotherTable(string playerSecret)
         {
@@ -306,5 +272,12 @@ namespace Fool.Core.Services
         {
             return table.Game.Players.Where(player => player != table.Game.DefendingPlayer).All(player => player.WantsToFinishRound);
         }
+
+        private bool IsTimeUp(Table table)
+        {
+            var shouldFinishAt = table.RoundWasStoppedAt.Value.AddSeconds(20);
+            return DateTime.UtcNow >= shouldFinishAt;
+        }
+
     }
 }
