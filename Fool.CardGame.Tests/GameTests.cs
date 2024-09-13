@@ -384,7 +384,7 @@ namespace Fool.CardGame.Tests
             game.Deck = new Deck(new DesiredUserHandGenerator(new string[]
                {
                 "A♠,Q♦,Q♣,Q♥,10♥,7♦", // Attacking game.Players[3]
-                "Q♠,A♦,A♣,A♥,10♣,10♠", 
+                "Q♠,A♦,A♣,A♥,10♣,10♠",
                 "J♠,J♦,J♣,J♥,9♣,9♠",
                 "6♠,8♦,8♣,6♥,10♦,9♦" //Defending  game.Players[1]
 
@@ -463,6 +463,40 @@ namespace Fool.CardGame.Tests
 
             var anotherDeckCount = game.Deck.CardsCount;
             Assert.That(deckCount, Is.Not.EqualTo(anotherDeckCount));
+        }
+
+        [Test]
+        public void Game_CheckThatLooserOfTheGame_IsFoundCorrectly()
+        {
+            var game = new Game();
+            game.AddPlayer("1");
+            game.AddPlayer("2");
+            game.AddPlayer("3");
+            game.AddPlayer("4");
+            game.AddPlayer("5");
+            game.AddPlayer("6");
+
+            game.Deck = new Deck(new TestDeckGenerator());
+            game.PrepareForTheGame();
+            for (var index = 0; index < 6; index++)
+            {
+                var player = game.Players[index];
+                if (index != game.Players.IndexOf(game.DefendingPlayer))
+                {
+                    if (index == game.Players.IndexOf(game.AttackingPlayer))
+                    {
+                        player.Hand.RemoveRange(0, 5);
+                    }
+                    else
+                    {
+                        player.DropHand();
+                    }
+                }
+            }
+
+            game.AttackingPlayer.FirstAttack([0]);
+            Assert.That(game.GameStatus, Is.EqualTo(GameStatus.Finished));
+            Assert.That(game.FoolPlayer, Is.Not.Null);
         }
 
 

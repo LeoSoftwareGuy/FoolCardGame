@@ -71,10 +71,7 @@ namespace Fool.Core.Models
             }
 
             _game.FirstAttack(this, attackingCards);
-            foreach (var card in attackingCards)
-            {
-                Hand.Remove(card);
-            }
+           
         }
 
         public void Attack(int[] cardIndexes)

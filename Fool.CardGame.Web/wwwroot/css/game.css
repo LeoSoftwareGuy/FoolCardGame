@@ -303,3 +303,9 @@
 .background {
     background: url(/images/backgroun.jpg) 50% / cover no-repeat;
 }
+
+.fool_img {
+    display:none;
+    width: 44px;
+    height: 44px;
+}

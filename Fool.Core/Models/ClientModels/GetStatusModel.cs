@@ -18,11 +18,13 @@ namespace Fool.CardGame.Web.Models
             public PlayerModel[]? Players { get; set; }
             public int MyIndex { get; set; }
             public int DefenderIndex { get; set; }
+            public int? FoolPlayerIndex { get; set; }
             public bool DoIWishToFinishTheRound { get; set; }
             public string? Status { get; set; }
             public string? OwnerSecretKey { get; set; }
             public string? DefenderSecretKey { get; set; }
             public string? AttackingSecretKey { get; set; }
+            public string? FoolSecretKey { get; set; }
             public bool? SurrenderHasStarted { get; set; }
         }
 

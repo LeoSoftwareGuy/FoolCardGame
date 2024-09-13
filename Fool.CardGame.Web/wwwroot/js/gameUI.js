@@ -236,8 +236,16 @@ function drawYourself(status) {
     yourPlayerDiv.getElementsByClassName('player__name')[0].innerHTML = user.name;
     yourPlayerDiv.getElementsByClassName('player__name')[0].title = user.name;
 
+    //If you are surrendring
     if (status.table.surrenderHasStarted && status.table.defenderSecretKey == user.secret) {
         yourPlayerDiv.getElementsByClassName('player__timer__defending')[0].innerHTML = 'I am surrendering!!';
+    }
+    debugger;
+
+    //if you have lost
+    if (status.table.status == 'Finished' && user.secret == status.table.foolSecretKey) {
+        
+        yourPlayerDiv.getElementsByClassName('fool_img')[0].style.display = 'block';
     }
     document.getElementById('yourPlayer').appendChild(yourPlayerDiv);
 }
@@ -354,8 +362,14 @@ function drawPlayersAndTheirHands(status) {
         let player = status.table.players[playerIndex];
         let playerDiv = originalPlayerDiv.cloneNode(true);
 
+        //If player is surrendering
         if (gameIndex == status.table.defenderIndex && status.table.surrenderHasStarted) {
             playerDiv.getElementsByClassName('player__timer__attacking')[0].innerHTML = 'I am surrendering!!'
+        }
+
+        //if player has lost
+        if (status.table.status == 'Finished' && gameIndex == status.table.foolPlayerIndex) {
+            playerDiv.getElementsByClassName('fool_img')[0].style.display = 'block';
         }
         playerDiv.getElementsByClassName('player__name')[0].innerHTML = player.name;
         playerDiv.getElementsByClassName('player__name')[0].title = player.name;

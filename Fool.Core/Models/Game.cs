@@ -160,6 +160,7 @@ namespace Fool.Core.Models
                 {
                     var tableCard = new TableCard(Deck.TrumpCard, card);
                     CardsOnTheTable.Add(tableCard);
+                    player.Hand.Remove(card);  // Remove cards since they are now on the table
                 }
             }
             RoundStarted = true;
@@ -343,7 +344,7 @@ namespace Fool.Core.Models
         private void CheckIfAnybodyHasWon()
         {
             var playersWithoutCards = Players.Where(x => x.Hand.Count > 0);
-            if (playersWithoutCards.Count() == 1)
+            if (playersWithoutCards.Count() == 1 && Deck.CardsCount.Equals(0))
             {
                 FoolPlayer = playersWithoutCards.First();
                 GameStatus = GameStatus.Finished;

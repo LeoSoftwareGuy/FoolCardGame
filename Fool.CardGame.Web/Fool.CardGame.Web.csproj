@@ -26,6 +26,9 @@
     <Content Update="wwwroot\images\backgroun.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Update="wwwroot\images\foolJerry.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Update="wwwroot\images\player.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

@@ -50,7 +50,17 @@ namespace Fool.Core.Services
             }
         }
 
+        public void StartGame(Guid tableId, string playerSecret)
+        {
+            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
 
+            if (table.Owner != player)
+            {
+                throw new FoolExceptions("You are not table owner, you cant start the game");
+            }
+
+            table.Game.PrepareForTheGame();
+        }
 
         public GetStatusModel GetStatus(string playerSecret)
         {
@@ -83,6 +93,8 @@ namespace Fool.Core.Services
                         Id = table!.Id,
                         MyIndex = table.Game.Players.IndexOf(player!),
                         DefenderIndex = table.Game.Players.IndexOf(table.Game.DefendingPlayer!),
+                        FoolPlayerIndex = table.Game.FoolPlayer != null ? table.Game.Players.IndexOf(table.Game.FoolPlayer)
+                                                                        : null,
                         DoIWishToFinishTheRound = player!.WantsToFinishRound,
                         PlayerHand = player.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
                         DeckCardsCount = table.Game.Deck.CardsCount,
@@ -93,14 +105,15 @@ namespace Fool.Core.Services
                         Players = table.Game.Players.Where(p => p != player)
                                                           .Select((c, i) => new GetStatusModel.PlayerModel { Index = i, Name = c.Name, CardsCount = c.Hand.Count, WantsToFinishRound = c.WantsToFinishRound })
                                                           .ToArray(),
-                        Status = table.Game.GameStatus != null
-                                                             ? table.Game.GameStatus.ToString()
-                                                             : null,
+                        Status = table.Game.GameStatus == null
+                                                             ? null
+                                                             : table.Game.GameStatus.ToString(),
                         AttackingSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.AttackingPlayer).Key,
                         OwnerSecretKey = table.Owner != null
                                                      ? table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Owner).Key
                                                      : null,
                         DefenderSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.DefendingPlayer).Key,
+                        FoolSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.FoolPlayer).Key,
                         SurrenderHasStarted = table.RoundWasStoppedAt != null
                                                                       ? true
                                                                       : false,
@@ -108,18 +121,6 @@ namespace Fool.Core.Services
                     Tables = null
                 };
             }
-        }
-
-        public void StartGame(Guid tableId, string playerSecret)
-        {
-            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
-
-            if (table.Owner != player)
-            {
-                throw new FoolExceptions("You are not table owner, you cant start the game");
-            }
-
-            table.Game.PrepareForTheGame();
         }
 
 
@@ -172,6 +173,11 @@ namespace Fool.Core.Services
         public void SurrenderCurrentRound(Guid tableId, string playerSecret)
         {
             var (table, player) = GetTableAndPlayer(tableId, playerSecret);
+
+            if (table.Game.FoolPlayer != null)
+            {
+                throw new FoolExceptions("Game is already over!");
+            }
 
             if (table.Game.DefendingPlayer != player)
             {
