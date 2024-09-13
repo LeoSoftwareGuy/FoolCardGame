@@ -22,7 +22,7 @@ namespace Fool.Core.Models
         public GameStatus GameStatus { get; private set; }
         public bool RoundStarted { get; private set; }
 
-
+        public Player? FoolPlayer { get; private set; }
         public Player? AttackingPlayer
         {
             get
@@ -94,25 +94,31 @@ namespace Fool.Core.Models
             }
             else
             {
+                var foolPlayerIndex = -1;
+                if (FoolPlayer != null)
+                {
+                    foolPlayerIndex = Players.IndexOf(FoolPlayer);
+                    FoolPlayer = null;
+                }
+
                 Deck.Shuffle();
                 DealHands();
-                _attackingPlayer = DecideWhoPlaysFirst();
+                _attackingPlayer = DecideWhoPlaysFirst(foolPlayerIndex);
             }
 
             GameStatus = GameStatus.InProgress;
         }
 
 
-        public void DealHands()
-        {
-            foreach (var player in Players)
-            {
-                player.TakeCards(Deck.DealHand());
-            }
-        }
+
 
         public void FinishTheRound()
         {
+            if (FoolPlayer != null)
+            {
+                throw new FoolExceptions("Game is finished, we already have a fool!");
+            }
+
             var wasDefendingPlayerSuccessful = true;
             if (!CardsOnTheTable.All(c => c.DefendingCard != null))
             {
@@ -133,6 +139,11 @@ namespace Fool.Core.Models
 
         internal void FirstAttack(Player player, List<Card> cards)
         {
+            if (FoolPlayer != null)
+            {
+                throw new FoolExceptions("Game is finished, we already have a fool!");
+            }
+
             if (RoundStarted)
             {
                 throw new FoolExceptions("Round has already started, use Attack method instead!");
@@ -152,10 +163,17 @@ namespace Fool.Core.Models
                 }
             }
             RoundStarted = true;
+
+            //not sure if it is possible
+            CheckIfAnybodyHasWon();
         }
 
         internal void Attack(Player player, List<Card> cards)
         {
+            if (FoolPlayer != null)
+            {
+                throw new FoolExceptions("Game is finished, we already have a fool!");
+            }
             //TODO add lock to prevent parallel calls
             if (RoundStarted == false)
             {
@@ -180,11 +198,19 @@ namespace Fool.Core.Models
             {
                 var tableCard = new TableCard(Deck.TrumpCard, card);
                 CardsOnTheTable.Add(tableCard);
+                player.Hand.Remove(card);  // Remove cards since they are now on the table
             }
+
+            CheckIfAnybodyHasWon();
         }
 
         internal void Defend(Player player, Card defendingCard, Card attackingCard)
         {
+            if (FoolPlayer != null)
+            {
+                throw new FoolExceptions("Game is finished, we already have a fool!");
+            }
+
             if (RoundStarted == false)
             {
                 throw new FoolExceptions("Round has not started, there is nothing to defend against!");
@@ -213,37 +239,59 @@ namespace Fool.Core.Models
             }
         }
 
-        private Player DecideWhoPlaysFirst()
-        {
-            while (true)
-            {
-                var trumpSuit = Deck.TrumpCard.Suit.Name;
-                var playerAndItsLowestTrumpCard = new Dictionary<Player, Card>();
-                foreach (var player in Players)
-                {
-                    var playersLowestTrumpCard = player.Hand.FindAll(x => x.Suit.Name == trumpSuit)
-                                                      .OrderBy(x => x.Rank.Value)
-                                                      .FirstOrDefault();
-                    if (playersLowestTrumpCard != null)
-                    {
-                        playerAndItsLowestTrumpCard.Add(player, playersLowestTrumpCard);
-                    }
-                }
 
-                if (playerAndItsLowestTrumpCard != null && playerAndItsLowestTrumpCard.Count > 0)
+        private void DealHands()
+        {
+            foreach (var player in Players)
+            {
+                player.TakeCards(Deck.DealHand());
+            }
+        }
+
+        private Player DecideWhoPlaysFirst(int foolPlayerIndex)
+        {
+            // Teach fool a lesson rule!
+            if (foolPlayerIndex != -1)
+            {
+                var playerWhoAttacksFirstIndex = foolPlayerIndex - 1;
+                if (playerWhoAttacksFirstIndex < 0)
                 {
-                    var lowestValueAmongPlayers = playerAndItsLowestTrumpCard.Min(x => x.Value.Rank.Value);
-                    var playerWhoPlaysFirst = playerAndItsLowestTrumpCard.FirstOrDefault(x => x.Value.Rank.Value == lowestValueAmongPlayers).Key;
-                    return playerWhoPlaysFirst;
+                    playerWhoAttacksFirstIndex = Players.Count - 1;                
                 }
-                else
+                return Players[playerWhoAttacksFirstIndex];
+            }
+            else
+            {
+                while (true)
                 {
-                    Deck = new Deck(new CardDeckGenerator());
-                    Deck.Shuffle();
+                    var trumpSuit = Deck.TrumpCard.Suit.Name;
+                    var playerAndItsLowestTrumpCard = new Dictionary<Player, Card>();
                     foreach (var player in Players)
                     {
-                        player.DropHand();
-                        player.TakeCards(Deck.DealHand());
+                        var playersLowestTrumpCard = player.Hand.FindAll(x => x.Suit.Name == trumpSuit)
+                                                          .OrderBy(x => x.Rank.Value)
+                                                          .FirstOrDefault();
+                        if (playersLowestTrumpCard != null)
+                        {
+                            playerAndItsLowestTrumpCard.Add(player, playersLowestTrumpCard);
+                        }
+                    }
+
+                    if (playerAndItsLowestTrumpCard != null && playerAndItsLowestTrumpCard.Count > 0)
+                    {
+                        var lowestValueAmongPlayers = playerAndItsLowestTrumpCard.Min(x => x.Value.Rank.Value);
+                        var playerWhoPlaysFirst = playerAndItsLowestTrumpCard.FirstOrDefault(x => x.Value.Rank.Value == lowestValueAmongPlayers).Key;
+                        return playerWhoPlaysFirst;
+                    }
+                    else
+                    {
+                        Deck = new Deck(new CardDeckGenerator());
+                        Deck.Shuffle();
+                        foreach (var player in Players)
+                        {
+                            player.DropHand();
+                            player.TakeCards(Deck.DealHand());
+                        }
                     }
                 }
             }
@@ -290,6 +338,16 @@ namespace Fool.Core.Models
             }
 
             _attackingPlayer = Players[attackingPlayerIndex];
+        }
+
+        private void CheckIfAnybodyHasWon()
+        {
+            var playersWithoutCards = Players.Where(x => x.Hand.Count > 0);
+            if (playersWithoutCards.Count() == 1)
+            {
+                FoolPlayer = playersWithoutCards.First();
+                GameStatus = GameStatus.Finished;
+            }
         }
 
     }

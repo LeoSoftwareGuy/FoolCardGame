@@ -93,10 +93,7 @@ namespace Fool.Core.Models
                 throw new FoolExceptions("Multiple cards attack can only be with identical Rank cards!");
             }
             _game.Attack(this, attackingCards);
-            foreach (var card in attackingCards)
-            {
-                Hand.Remove(card);
-            }
+         
         }
 
         public void Defend(int defendingCardIndex, int attackingCardId)
