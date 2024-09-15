@@ -24,6 +24,34 @@ namespace Fool.Core.Services
             return table.Id;
         }
 
+        public string LeaveTable(Guid tableId, string playerSecret)
+        {
+            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
+            var alertMessage = $"Fucking player:{player.Name} has left the table.";
+
+            // we need another owner to start the game
+            if (table.Owner == player)
+            {
+                var newOwner = table.Game.Players.FirstOrDefault(p => p != player);
+                if (newOwner != null)
+                {
+                    table.Owner = newOwner;
+                }
+            }
+            var message = table.Game.RemovePlayer(player);
+            table.PlayersAndTheirSecretKeys.Remove(playerSecret);
+            alertMessage += message;
+
+            // Delete the table completelt if all players left
+            if (table.Game.Players.Count.Equals(0))
+            {
+                TablesWithGames.Remove(table.Id);
+
+            }
+
+            return alertMessage;
+        }
+
         public void SitToTheTable(string playerSecret, string playerName, Guid tableId)
         {
             // player who sit first is the main player

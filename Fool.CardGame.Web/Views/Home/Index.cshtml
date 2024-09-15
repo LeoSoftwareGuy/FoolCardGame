@@ -9,7 +9,11 @@
         <label id="nameLabel"></label>
         <button class="btn btn-danger" id="logoutBtn" onclick="logout()">Logout</button>
     </div>
-    <button class="btn btn-success createTableBtn" onclick="createTable()">Create Table</button>
+    <div>
+        <button class="btn btn-success createTableBtn" id="createTableBtn" onclick="createTable()">Create Table</button>
+        <button class="btn btn-warning" id="leaveTableBtn" onclick="leaveTable()">Leave Table</button>
+    </div>
+
 </div>
 
 
@@ -67,7 +71,7 @@
         <button class="btn btn-dark playingTable__btn" onclick="sitToTheTableClick(this)">Sit Here</button>
     </div>
     <div class="player">
-        <img class="fool_img" src="~/images/foolJerry.png" />
+        <img class="fool_img" src="~/images/foolJerry.jpg" />
         <label class="player__timer__attacking"></label>
         <img class="player__img" src="/images/player.png" />
         <label class="player__name"></label>
@@ -76,7 +80,7 @@
         </div>
     </div>
     <div class="meAsPlayer">
-        <img class="fool_img" src="~/images/foolJerry.png" />
+        <img class="fool_img" src="~/images/foolJerry.jpg" />
         <label class="player__timer__defending"></label>
         <img class="player__img" src="/images/player.png" />
         <label class="player__name"></label>

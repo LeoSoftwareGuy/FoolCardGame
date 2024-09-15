@@ -47,6 +47,7 @@
 
 #yourPlayer {
     margin-top: 1rem;
+    width:100%;
     display: flex;
     align-content: center;
     justify-content: center;
@@ -54,6 +55,11 @@
 
 .meAsPlayer {
     position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
 }
 
 .playingTable {
@@ -281,9 +287,10 @@
     font-size: 0.6rem;
     font-weight: bold;
     border: 1px solid white;
-    color:white;
+    color: white;
     text-align: center;
     border-radius: 24rem;
+    box-shadow: 0 0 40px rgba(0, 255, 0, 0.7);
 }
 
 .player__timer__defending {

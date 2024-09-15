@@ -75,6 +75,11 @@ namespace Fool.Core.Models
                 throw new FoolExceptions("Game has already started, you cant join now");
             }
 
+            if (GameStatus == GameStatus.Finished)
+            {
+                throw new FoolExceptions("Game has already finished, you cant join now");
+            }
+
             var player = new Player(playerName, this);
             Players.Add(player);
 
@@ -83,6 +88,40 @@ namespace Fool.Core.Models
                 GameStatus = GameStatus.ReadyToBegin;
             }
             return player;
+        }
+
+        public string RemovePlayer(Player player)
+        {
+            if (player == null)
+            {
+                throw new FoolExceptions("Player was not found!");
+            }
+
+            Players.Remove(player);
+
+            if (GameStatus == GameStatus.InProgress)
+            {
+                GameStatus = GameStatus.Finished;
+            }
+            else
+            {
+                if (Players.Count <= 1)
+                {
+                    GameStatus = GameStatus.WaitingForPlayers;
+                }
+            }
+
+            switch (GameStatus)
+            {
+                case GameStatus.WaitingForPlayers:
+                    return string.Empty;
+                case GameStatus.ReadyToBegin:
+                    return string.Empty;
+                case GameStatus.Finished:
+                    return "Game has finished";
+                default:
+                    return string.Empty;
+            }
         }
 
 
@@ -114,10 +153,7 @@ namespace Fool.Core.Models
 
         public void FinishTheRound()
         {
-            if (FoolPlayer != null)
-            {
-                throw new FoolExceptions("Game is finished, we already have a fool!");
-            }
+            CheckIfGameIsOver();
 
             var wasDefendingPlayerSuccessful = true;
             if (!CardsOnTheTable.All(c => c.DefendingCard != null))
@@ -139,10 +175,7 @@ namespace Fool.Core.Models
 
         internal void FirstAttack(Player player, List<Card> cards)
         {
-            if (FoolPlayer != null)
-            {
-                throw new FoolExceptions("Game is finished, we already have a fool!");
-            }
+            CheckIfGameIsOver();
 
             if (RoundStarted)
             {
@@ -171,10 +204,7 @@ namespace Fool.Core.Models
 
         internal void Attack(Player player, List<Card> cards)
         {
-            if (FoolPlayer != null)
-            {
-                throw new FoolExceptions("Game is finished, we already have a fool!");
-            }
+            CheckIfGameIsOver();
             //TODO add lock to prevent parallel calls
             if (RoundStarted == false)
             {
@@ -207,10 +237,7 @@ namespace Fool.Core.Models
 
         internal void Defend(Player player, Card defendingCard, Card attackingCard)
         {
-            if (FoolPlayer != null)
-            {
-                throw new FoolExceptions("Game is finished, we already have a fool!");
-            }
+            CheckIfGameIsOver();
 
             if (RoundStarted == false)
             {
@@ -257,7 +284,7 @@ namespace Fool.Core.Models
                 var playerWhoAttacksFirstIndex = foolPlayerIndex - 1;
                 if (playerWhoAttacksFirstIndex < 0)
                 {
-                    playerWhoAttacksFirstIndex = Players.Count - 1;                
+                    playerWhoAttacksFirstIndex = Players.Count - 1;
                 }
                 return Players[playerWhoAttacksFirstIndex];
             }
@@ -348,6 +375,14 @@ namespace Fool.Core.Models
             {
                 FoolPlayer = playersWithoutCards.First();
                 GameStatus = GameStatus.Finished;
+            }
+        }
+
+        private void CheckIfGameIsOver()
+        {
+            if (GameStatus == GameStatus.Finished)
+            {
+                throw new FoolExceptions("Game is over!");
             }
         }
 

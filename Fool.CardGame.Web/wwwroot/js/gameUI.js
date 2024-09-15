@@ -97,6 +97,24 @@ function createTable() {
     });
 }
 
+function leaveTable() {
+    SendRequest({
+        method: 'POST',
+        url: '/Home/LeaveTable',
+        body: {
+            playerSecret: user.secret,
+            tableId: gameStatus.table.id
+        },
+        success: function (data) {
+            notifyUserBrowsersAboutUpdate();
+            debugger;
+            alert(data.responseText);
+        },
+        error: function (data) {
+            alert("Something went wrong during leaving the table");
+        }
+    });
+}
 function sitToTheTableClick(element) {
     let tableId = element.closest('.playingTable').getAttribute('table-id');
     sitToTheTable(tableId);
@@ -148,6 +166,7 @@ function getStatus() {
             gameStatus = status;
 
             resetClientView();
+            drawProperTableButtons(status);
             if (status.table == null) {
                 drawTables(status);
             } else {
@@ -177,6 +196,17 @@ function resetClientView() {
     document.getElementById('players').innerHTML = '';
     document.getElementById('currentGame_Info_gameStatus').innerHTML = '';
     document.getElementById('currentGame_Info_playerRole').innerHTML = '';
+}
+
+function drawProperTableButtons(status) {
+    if (status.table == null) {
+        document.getElementById('leaveTableBtn').classList.add('hidden');
+        document.getElementById('createTableBtn').classList.remove('hidden');
+    }
+    else {
+        document.getElementById('createTableBtn').classList.add('hidden');
+        document.getElementById('leaveTableBtn').classList.remove('hidden');
+    }
 }
 function drawTables(status) {
     let originalTableDiv = document.getElementsByClassName('playingTable')[0];
@@ -240,11 +270,10 @@ function drawYourself(status) {
     if (status.table.surrenderHasStarted && status.table.defenderSecretKey == user.secret) {
         yourPlayerDiv.getElementsByClassName('player__timer__defending')[0].innerHTML = 'I am surrendering!!';
     }
-    debugger;
 
     //if you have lost
     if (status.table.status == 'Finished' && user.secret == status.table.foolSecretKey) {
-        
+
         yourPlayerDiv.getElementsByClassName('fool_img')[0].style.display = 'block';
     }
     document.getElementById('yourPlayer').appendChild(yourPlayerDiv);

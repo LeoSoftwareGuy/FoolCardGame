@@ -35,6 +35,13 @@ namespace Fool.CardGame.Web.Controllers
         }
 
         [HttpPost]
+        public JsonResult LeaveTable([FromBody] AuthModel model)
+        {
+            var message = _tableService.LeaveTable(model.TableId, model.PlayerSecret);
+            return Json(message);
+        }
+
+        [HttpPost]
         public void JoinTable([FromBody] JoinTableModel model)
         {
             _tableService.SitToTheTable(model.PlayerSecret, model.PlayerName, model.TableId);
@@ -75,7 +82,7 @@ namespace Fool.CardGame.Web.Controllers
         }
 
         [HttpPost]
-        public void EndRound([FromBody]AuthModel model)
+        public void EndRound([FromBody] AuthModel model)
         {
             _tableService.EndCurrentRound(model.TableId, model.PlayerSecret);
         }
