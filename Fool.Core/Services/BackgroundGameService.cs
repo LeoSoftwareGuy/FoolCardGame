@@ -45,6 +45,7 @@ namespace Fool.Core.Services
 
             // Perform your background task here, e.g., interacting with _tableService
             _tableService.CheckIfRoundWasStopped();
+            _tableService.CheckIfThereAreAfkPlayers();
         }
 
     }

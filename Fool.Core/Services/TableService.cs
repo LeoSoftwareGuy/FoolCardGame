@@ -19,30 +19,30 @@ namespace Fool.Core.Services
         public Guid CreateTable()
         {
             var game = new Game();
-            var table = new Table { Id = Guid.NewGuid(), Game = game, PlayersAndTheirSecretKeys = new Dictionary<string, Player> { } };
+            var table = new Table { Id = Guid.NewGuid(), Game = game, PlayersAtTheTable = new List<PlayerAtTheTable> { } };
             TablesWithGames.Add(table.Id, table);
             return table.Id;
         }
 
         public string LeaveTable(Guid tableId, string playerSecret)
         {
-            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
-            var alertMessage = $"Fucking player:{player.Name} has left the table.";
+            var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
+            var alertMessage = $"Fucking player:{playerAtTheTable.Player.Name} has left the table.";
 
             // we need another owner to start the game
-            if (table.Owner == player)
+            if (table.Owner == playerAtTheTable.Player)
             {
-                var newOwner = table.Game.Players.FirstOrDefault(p => p != player);
+                var newOwner = table.Game.Players.FirstOrDefault(p => p != playerAtTheTable.Player);
                 if (newOwner != null)
                 {
                     table.Owner = newOwner;
                 }
             }
-            var message = table.Game.RemovePlayer(player);
-            table.PlayersAndTheirSecretKeys.Remove(playerSecret);
+            var message = table.Game.RemovePlayer(playerAtTheTable.Player);
+            table.PlayersAtTheTable.Remove(playerAtTheTable);
             alertMessage += message;
 
-            // Delete the table completelt if all players left
+            // Delete the table if all players left
             if (table.Game.Players.Count.Equals(0))
             {
                 TablesWithGames.Remove(table.Id);
@@ -65,7 +65,8 @@ namespace Fool.Core.Services
             if (TablesWithGames.FirstOrDefault(c => c.Key.Equals(tableId)).Value is Table table)
             {
                 var player = table.Game.AddPlayer(playerName);
-                table.PlayersAndTheirSecretKeys.Add(playerSecret, player);
+                var playerAtTheTable = new PlayerAtTheTable { Player = player, SecretKey = playerSecret };
+                table.PlayersAtTheTable.Add(playerAtTheTable);
 
                 if (IfThereIsOnlyOnePlayerOnTheTable(table))
                 {
@@ -80,14 +81,15 @@ namespace Fool.Core.Services
 
         public void StartGame(Guid tableId, string playerSecret)
         {
-            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
+            var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
-            if (table.Owner != player)
+            if (table.Owner != playerAtTheTable.Player)
             {
                 throw new FoolExceptions("You are not table owner, you cant start the game");
             }
 
             table.Game.PrepareForTheGame();
+            table.SetTimerForAttackingPlayersAction();
         }
 
         public GetStatusModel GetStatus(string playerSecret)
@@ -95,7 +97,7 @@ namespace Fool.Core.Services
             //If player is already siting behind the table then return the table status
             // otherwise return all tables with players
             var table = FindTableWhereUserIsPlaying(playerSecret);
-            var player = table == null ? null : table.PlayersAndTheirSecretKeys[playerSecret];
+            var player = table == null ? null : table.PlayersAtTheTable.FirstOrDefault(p => p.SecretKey.Equals(playerSecret))?.Player;
 
             if (table == null && player == null)
             {
@@ -105,9 +107,9 @@ namespace Fool.Core.Services
                     Tables = TablesWithGames.Select(t => new GetStatusModel.TableModel
                     {
                         Id = t.Value.Id,
-                        Players = t.Value.PlayersAndTheirSecretKeys.Select(x => x.Value)
-                                                                   .Select(x => new GetStatusModel.PlayerModel { Name = x.Name })
-                                                                   .ToArray()
+                        Players = t.Value.PlayersAtTheTable
+                                                  .Select(x => new GetStatusModel.PlayerModel { Name = x.Player.Name })
+                                                  .ToArray()
                     }).ToArray()
                 };
 
@@ -136,12 +138,12 @@ namespace Fool.Core.Services
                         Status = table.Game.GameStatus == null
                                                              ? null
                                                              : table.Game.GameStatus.ToString(),
-                        AttackingSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.AttackingPlayer).Key,
+                        AttackingSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.AttackingPlayer)?.SecretKey,
                         OwnerSecretKey = table.Owner != null
-                                                     ? table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Owner).Key
+                                                     ? table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Owner)?.SecretKey
                                                      : null,
-                        DefenderSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.DefendingPlayer).Key,
-                        FoolSecretKey = table.PlayersAndTheirSecretKeys.FirstOrDefault(p => p.Value == table.Game.FoolPlayer).Key,
+                        DefenderSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.DefendingPlayer)?.SecretKey,
+                        FoolSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.FoolPlayer)?.SecretKey,
                         SurrenderHasStarted = table.RoundWasStoppedAt != null
                                                                       ? true
                                                                       : false,
@@ -159,7 +161,7 @@ namespace Fool.Core.Services
                 throw new FoolExceptions("You can't attack without providing card IDs");
             }
 
-            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
+            var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
             var allowedToAddCardsCount = 6 - table.Game.CardsOnTheTable.Count;
             cardIds = cardIds.Take(allowedToAddCardsCount).ToArray();
@@ -172,20 +174,21 @@ namespace Fool.Core.Services
 
             if (table.Game.RoundStarted)
             {
-                player.Attack(cardIds);
+                playerAtTheTable.Player.Attack(cardIds);
             }
             else
             {
-                player.FirstAttack(cardIds);
+                playerAtTheTable.Player.FirstAttack(cardIds);
             }
 
+            table.SetTimerForAttackingPlayersAction();
             table.Game.RefreshTheRound();
         }
 
 
         public void Defend(Guid tableId, string playerSecret, int defendingCardIndex, int attackingCardIndex)
         {
-            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
+            var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
             if (table.RoundWasStoppedAt != null)
             {
@@ -193,21 +196,22 @@ namespace Fool.Core.Services
             }
             else
             {
-                player.Defend(defendingCardIndex, attackingCardIndex);
+                playerAtTheTable.Player.Defend(defendingCardIndex, attackingCardIndex);
             }
+            table.SetTimerForAttackingPlayersAction();
         }
 
 
         public void SurrenderCurrentRound(Guid tableId, string playerSecret)
         {
-            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
+            var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
             if (table.Game.FoolPlayer != null)
             {
                 throw new FoolExceptions("Game is already over!");
             }
 
-            if (table.Game.DefendingPlayer != player)
+            if (table.Game.DefendingPlayer != playerAtTheTable.Player)
             {
                 throw new FoolExceptions("Only the defending player can surrender.");
             }
@@ -217,25 +221,26 @@ namespace Fool.Core.Services
                 throw new FoolExceptions("The round is already in the process of stopping!");
             }
 
+            table.ClearAllTimers();
             table.RoundWasStoppedAt = DateTime.UtcNow;
         }
 
 
         public void EndCurrentRound(Guid tableId, string playerSecret)
         {
-            var (table, player) = GetTableAndPlayer(tableId, playerSecret);
+            var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
             if (!table.Game.CardsOnTheTable.All(c => c.DefendingCard != null))
             {
                 throw new FoolExceptions("All Cards on the table should be defended");
             }
 
-            if (player == table.Game.DefendingPlayer)
+            if (playerAtTheTable.Player == table.Game.DefendingPlayer)
             {
                 throw new FoolExceptions("Only attacking player can finish the round");
             }
 
-            if (player.WantsToFinishRound)
+            if (playerAtTheTable.Player.WantsToFinishRound)
             {
                 throw new FoolExceptions("You have already finished the round!");
             }
@@ -243,13 +248,19 @@ namespace Fool.Core.Services
             // We set the current player prop that he want to finish the round, then we check other attacking players,
             // if they all want to finish the round , then we actually finish
             // otherwise nothing happens appart from setting the prop.
+            //TODO : Check if attackig player pressed the button and called this method,
+            // StART THE TIMER
+            // AFTER 20 SECONDS if nobody added more cards in the attack method, finish the round
+            // otherswise, continue the game and kill the timer
 
-            player.WantsToFinishTheRound();
+            playerAtTheTable.Player.WantsToFinishTheRound();
             if (IfAllAttackingPlayersWantToFinishTheRound(table))
             {
                 table.Game.FinishTheRound();
                 table.Game.RefreshTheRound();
             }
+            //If you implement timer instead of voiting , then all timers should be cleared her as we are waiting fo the game to end or for some other action whihc will start the timer again
+            table.SetTimerForAttackingPlayersAction();
         }
 
         public void CheckIfRoundWasStopped()
@@ -273,33 +284,58 @@ namespace Fool.Core.Services
             }
         }
 
+        public void CheckIfThereAreAfkPlayers()
+        {
+            foreach (var table in TablesWithGames.Values)
+            {
+                if (table.PlayersAtTheTable.Any(p => p.WasLastActiveAt != null))
+                {
+                    foreach (var tablePlayer in table.PlayersAtTheTable)
+                    {
+                        if (tablePlayer.WasLastActiveAt != null && isThinkingTimeUp(tablePlayer))
+                        {
+                            var message = LeaveTable(table.Id, tablePlayer.SecretKey);
+                            tablePlayer.WasLastActiveAt = null;
+                            _notificationService.SendAfkPlayerWasKickedAsync(message);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
-        private (Table, Player) GetTableAndPlayer(Guid tableId, string playerSecret)
+
+
+
+        private (Table, PlayerAtTheTable) GetTableAndPlayer(Guid tableId, string playerSecret)
         {
             if (!TablesWithGames.TryGetValue(tableId, out var table))
                 throw new FoolExceptions("Table was not found");
 
-            if (!table.PlayersAndTheirSecretKeys.TryGetValue(playerSecret, out var player))
+            var playerAtTheTable = table.PlayersAtTheTable.FirstOrDefault(p => p.SecretKey == playerSecret);
+            if (playerAtTheTable == null)
                 throw new FoolExceptions("Player was not found");
 
-            return (table, player);
+            return (table, playerAtTheTable);
         }
+
 
 
         private bool CheckIfPlayerIsAlreadyPlayingOnAnotherTable(string playerSecret)
         {
-            return TablesWithGames.Values.Any(table => table.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
+            return TablesWithGames.Values.Any(table => table.PlayersAtTheTable.Any(p => p.SecretKey == playerSecret));
         }
+
 
         private Table? FindTableWhereUserIsPlaying(string playerSecret)
         {
-            var table = TablesWithGames.Values.FirstOrDefault(t => t.PlayersAndTheirSecretKeys.ContainsKey(playerSecret));
-            return table == null ? null : table;
+            return TablesWithGames.Values.FirstOrDefault(t => t.PlayersAtTheTable.Any(p => p.SecretKey == playerSecret));
         }
+
 
         private bool IfThereIsOnlyOnePlayerOnTheTable(Table table)
         {
-            return table.PlayersAndTheirSecretKeys.Values.Count == 1;
+            return table.PlayersAtTheTable.Count == 1;
         }
 
         private bool IfAllAttackingPlayersWantToFinishTheRound(Table table)
@@ -310,6 +346,12 @@ namespace Fool.Core.Services
         private bool IsTimeUp(Table table)
         {
             var shouldFinishAt = table.RoundWasStoppedAt.Value.AddSeconds(20);
+            return DateTime.UtcNow >= shouldFinishAt;
+        }
+
+        private bool isThinkingTimeUp(PlayerAtTheTable player)
+        {
+            var shouldFinishAt = player.WasLastActiveAt!.Value.AddSeconds(20);
             return DateTime.UtcNow >= shouldFinishAt;
         }
 

@@ -15,6 +15,13 @@ gameHubConnection.on("StatusUpdate", function () {
     getStatus();
 });
 
+
+gameHubConnection.on("AfkPlayerIsOut", function (message) {
+    alert(message);
+    cleanActionButtons();
+    getStatus();
+});
+
 gameHubConnection.on("SurrenderFinished", function () {
     cleanActionButtons();
     getStatus();
