@@ -5,8 +5,8 @@
     /// </summary>
     public interface INotificationService
     {
-        Task SendSurrenderFinishedAsync();
+        Task SendRoundFinishedAsync();
         Task SendAfkPlayerWasKickedAsync(string message);
-        Task SendTimePassedAsync(double amountOfTimeRemaining);
+        Task SendTimePassedAsync(double amountOfTimeRemaining, bool isSurrender);
     }
 }

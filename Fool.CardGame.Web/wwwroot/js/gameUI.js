@@ -107,7 +107,6 @@ function leaveTable() {
         },
         success: function (data) {
             notifyUserBrowsersAboutUpdate();
-            debugger;
             alert(data.responseText);
         },
         error: function (data) {
@@ -266,9 +265,15 @@ function drawYourself(status) {
     yourPlayerDiv.getElementsByClassName('player__name')[0].innerHTML = user.name;
     yourPlayerDiv.getElementsByClassName('player__name')[0].title = user.name;
 
+    let doesanyPlayerWantToFinishTheRound = doesAnyPlayerWantToFinishTheRound();
     //If you are surrendring
-    if (status.table.surrenderHasStarted && status.table.defenderSecretKey == user.secret) {
-        yourPlayerDiv.getElementsByClassName('player__timer__defending')[0].innerHTML = 'I am surrendering!!';
+    if (status.table.roundIsEnding && status.table.defenderSecretKey == user.secret && !doesanyPlayerWantToFinishTheRound) {
+        yourPlayerDiv.getElementsByClassName('player__timer__defending')[0].innerHTML = 'Ok!!';
+    }
+
+    // If you wish to finish the round
+    if (status.table.roundIsEnding && status.table.doIWishToFinishTheRound) {
+        yourPlayerDiv.getElementsByClassName('player__timer__defending')[0].innerHTML = 'Ok!!';
     }
 
     //if you have lost
@@ -391,9 +396,14 @@ function drawPlayersAndTheirHands(status) {
         let player = status.table.players[playerIndex];
         let playerDiv = originalPlayerDiv.cloneNode(true);
 
-        //If player is surrendering
-        if (gameIndex == status.table.defenderIndex && status.table.surrenderHasStarted) {
-            playerDiv.getElementsByClassName('player__timer__attacking')[0].innerHTML = 'I am surrendering!!'
+        //If player is surrendering(only defending player can do that))
+        if (gameIndex == status.table.defenderIndex && status.table.roundIsEnding && !doesAnyPlayerWantToFinishTheRound()) {
+            playerDiv.getElementsByClassName('player__timer__attacking')[0].innerHTML = 'Ok!!'
+        }
+
+        //If player wants to finish the round (only attacking player can do that)
+        if (status.table.roundIsEnding && player.wantsToFinishRound && gameIndex != status.table.defenderIndex) {
+            playerDiv.getElementsByClassName('player__timer__attacking')[0].innerHTML = 'Ok!!'
         }
 
         //if player has lost
@@ -430,16 +440,20 @@ function drawSurrenderButton(status) {
             document.getElementById('playingCards_btn_surrender').classList.remove('hidden');
         }
     }
+
+    // Means either surrender button is clicked or round is ending, anyway we should hide the button
+    if (status.table.roundIsEnding) {
+        document.getElementById('playingCards_btn_surrender').classList.add('hidden');
+    }
 }
 function drawEndRoundButton(status) {
     // So it must be attacking player, there should cards on the table and all cards should be defended
-    //all attacking players must agree to finish the round, it should not be decided by 1 player
     if (user.secret == gameStatus.table.attackingSecretKey && status.table.cardsOnTheTable.length > 0) {
         let cardsOnTheTable = status.table.cardsOnTheTable;
         let attackingCardsCount = cardsOnTheTable.filter(card => card.attackingCard).length;
         let defendingCardsCount = cardsOnTheTable.filter(card => card.defendingCard).length;
 
-        if (attackingCardsCount == defendingCardsCount && status.table.doIWishToFinishTheRound == false) {
+        if (attackingCardsCount == defendingCardsCount && status.table.roundIsEnding == false) {
             document.getElementById('playingCards_btn_endRound').classList.remove('hidden');
         }
     }
@@ -576,6 +590,19 @@ function getSuit(suitChar) {
     }
 }
 
+function doesAnyPlayerWantToFinishTheRound() {
+    let players = gameStatus.table.players;
+    for (let i = 0; i < players.length; i++) {
+        let player = players[i];
+        if (player.wantsToFinishRound) {
+            return true;
+        }
+    }
+    if (gameStatus.table.doIWishToFinishTheRound) {
+        return true;
+    }
+    return false;
+}
 function cleanActionButtons() {
     document.getElementById("playingCards_btn_attack").classList.add('hidden');
     document.getElementById("playingCards_btn_defend").classList.add('hidden');

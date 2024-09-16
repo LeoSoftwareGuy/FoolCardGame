@@ -144,7 +144,7 @@ namespace Fool.Core.Services
                                                      : null,
                         DefenderSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.DefendingPlayer)?.SecretKey,
                         FoolSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.FoolPlayer)?.SecretKey,
-                        SurrenderHasStarted = table.RoundWasStoppedAt != null
+                        RoundIsEnding = table.RoundWasStoppedAt != null
                                                                       ? true
                                                                       : false,
                     },
@@ -181,7 +181,17 @@ namespace Fool.Core.Services
                 playerAtTheTable.Player.FirstAttack(cardIds);
             }
 
-            table.SetTimerForAttackingPlayersAction();
+            if (table.RoundWasStoppedAt != null)
+            {
+                // Without this check, surrendering timer would be reset
+                if (IfAnyAttackingPlayerDecidedToFinishTheRound(table))
+                {
+                    table.RoundWasStoppedAt = null;
+                    table.Game.RefreshTheRound();
+                    table.SetTimerForDefendingPlayersAction();
+                }
+            }
+
             table.Game.RefreshTheRound();
         }
 
@@ -245,22 +255,13 @@ namespace Fool.Core.Services
                 throw new FoolExceptions("You have already finished the round!");
             }
 
-            // We set the current player prop that he want to finish the round, then we check other attacking players,
-            // if they all want to finish the round , then we actually finish
-            // otherwise nothing happens appart from setting the prop.
-            //TODO : Check if attackig player pressed the button and called this method,
-            // StART THE TIMER
-            // AFTER 20 SECONDS if nobody added more cards in the attack method, finish the round
-            // otherswise, continue the game and kill the timer
-
-            playerAtTheTable.Player.WantsToFinishTheRound();
-            if (IfAllAttackingPlayersWantToFinishTheRound(table))
+            if (table.RoundWasStoppedAt != null)
             {
-                table.Game.FinishTheRound();
-                table.Game.RefreshTheRound();
+                throw new FoolExceptions("The round is already in the process of stopping!");
             }
-            //If you implement timer instead of voiting , then all timers should be cleared her as we are waiting fo the game to end or for some other action whihc will start the timer again
-            table.SetTimerForAttackingPlayersAction();
+            playerAtTheTable.Player.WantsToFinishTheRound();
+            table.ClearAllTimers();
+            table.RoundWasStoppedAt = DateTime.UtcNow;
         }
 
         public void CheckIfRoundWasStopped()
@@ -274,12 +275,20 @@ namespace Fool.Core.Services
                 {
                     table.RoundWasStoppedAt = null;
                     table.Game.FinishTheRound();
-                    _notificationService.SendSurrenderFinishedAsync();
+
+                    _notificationService.SendRoundFinishedAsync();
                 }
                 else
                 {
                     var amountOfTimeRemaining = (DateTime.UtcNow - table.RoundWasStoppedAt.Value).TotalSeconds;
-                    _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining));
+                    if (IfAnyAttackingPlayerDecidedToFinishTheRound(table))
+                    {
+                        _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining), false);
+                    }
+                    else
+                    {
+                        _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining), true);
+                    }
                 }
             }
         }
@@ -338,9 +347,9 @@ namespace Fool.Core.Services
             return table.PlayersAtTheTable.Count == 1;
         }
 
-        private bool IfAllAttackingPlayersWantToFinishTheRound(Table table)
+        private bool IfAnyAttackingPlayerDecidedToFinishTheRound(Table table)
         {
-            return table.Game.Players.Where(player => player != table.Game.DefendingPlayer).All(player => player.WantsToFinishRound);
+            return table.PlayersAtTheTable.Any(p => p.Player.WantsToFinishRound);
         }
 
         private bool IsTimeUp(Table table)
@@ -351,7 +360,7 @@ namespace Fool.Core.Services
 
         private bool isThinkingTimeUp(PlayerAtTheTable player)
         {
-            var shouldFinishAt = player.WasLastActiveAt!.Value.AddSeconds(20);
+            var shouldFinishAt = player.WasLastActiveAt!.Value.AddSeconds(60);
             return DateTime.UtcNow >= shouldFinishAt;
         }
 

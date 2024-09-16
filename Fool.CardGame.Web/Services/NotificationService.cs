@@ -13,9 +13,15 @@ namespace Fool.CardGame.Web.Services
             _hubContext = hubContext;
         }
 
-        public Task SendSurrenderFinishedAsync()
+        /// <summary>
+        /// Used for notifying all clients that the round has finished
+        /// Regardless of the reason
+        /// Used for both surrendering and ending when all cards were defended
+        /// </summary>
+        /// <returns></returns>
+        public Task SendRoundFinishedAsync()
         {
-            return _hubContext.Clients.All.SendAsync("SurrenderFinished");
+            return _hubContext.Clients.All.SendAsync("RoundFinished");
         }
 
         public Task SendAfkPlayerWasKickedAsync(string message)
@@ -23,9 +29,9 @@ namespace Fool.CardGame.Web.Services
             return _hubContext.Clients.All.SendAsync("AfkPlayerIsOut", message);
         }
 
-        public Task SendTimePassedAsync(double amountOfTimeRemaining)
+        public Task SendTimePassedAsync(double amountOfTimeRemaining, bool isSurrender)
         {
-            return _hubContext.Clients.All.SendAsync("TimePassed", amountOfTimeRemaining.ToString());
+            return _hubContext.Clients.All.SendAsync("TimePassed", amountOfTimeRemaining.ToString(), isSurrender);
         }
     }
 }

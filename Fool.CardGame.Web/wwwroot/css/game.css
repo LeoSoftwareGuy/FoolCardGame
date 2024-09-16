@@ -293,10 +293,7 @@
     box-shadow: 0 0 40px rgba(0, 255, 0, 0.7);
 }
 
-.player__timer__defending {
-    left: 63px;
-}
-
+.player__timer__defending,
 .player__timer__attacking {
     right: 362px;
 }

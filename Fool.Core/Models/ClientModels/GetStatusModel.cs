@@ -25,7 +25,7 @@ namespace Fool.CardGame.Web.Models
             public string? DefenderSecretKey { get; set; }
             public string? AttackingSecretKey { get; set; }
             public string? FoolSecretKey { get; set; }
-            public bool? SurrenderHasStarted { get; set; }
+            public bool? RoundIsEnding { get; set; }
         }
 
         public class CardModel
