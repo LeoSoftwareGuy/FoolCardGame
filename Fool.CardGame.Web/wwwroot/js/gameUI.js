@@ -13,6 +13,7 @@ function init() {
         document.getElementById('main').classList.add('hidden');
         document.getElementById('logoutBlock').classList.add('hidden');
         document.getElementById('loginBlock').classList.remove('hidden');
+        document.getElementById('chat-container').classList.add('hidden');
 
     } else {
         user.name = cookieName;
@@ -244,6 +245,8 @@ function drawGameStatus(status) {
         }
 
         if (status.table.status == 'InProgress') {
+            document.getElementById('chat-container').classList.remove('hidden');
+
             if (status.table.defenderSecretKey == user.secret) {
                 document.getElementById('currentGame_Info_playerRole').innerHTML = 'Defend';
             } else if (status.table.attackingSecretKey == user.secret) {
