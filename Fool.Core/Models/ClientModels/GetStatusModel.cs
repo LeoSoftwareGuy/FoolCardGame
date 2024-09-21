@@ -26,6 +26,7 @@ namespace Fool.CardGame.Web.Models
             public string? AttackingSecretKey { get; set; }
             public string? FoolSecretKey { get; set; }
             public bool? RoundIsEnding { get; set; }
+            public bool? isAfkTimeOn { get; set; }
         }
 
         public class CardModel
@@ -57,6 +58,7 @@ namespace Fool.CardGame.Web.Models
             public string Name { get; set; }
             public int CardsCount { get; set; }
             public bool WantsToFinishRound { get; set; }
+            public bool isAfkTimerOn { get; set; }
         }
 
     }

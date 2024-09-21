@@ -27,6 +27,12 @@ gameHubConnection.on("RoundFinished", function () {
     getStatus();
 });
 
+
+gameHubConnection.on("AfkPlayerIsCounting", function (message) {
+    updateAfkTimers(message, 'yourPlayer');
+    updateAfkTimers(message, 'players');
+});
+
 gameHubConnection.on("TimePassed", function (message, isSurrender) {
     updateSurrenderTimers(message, 'defending', 'yourPlayer', isSurrender);
     updateSurrenderTimers(message, 'attacking', 'players', isSurrender);
@@ -64,6 +70,29 @@ function updateSurrenderTimers(message, role, containerId, isSurrender) {
                 else {
                     timerElement.innerHTML = `Lets finish the round in ${message} seconds`;
                 }
+            }
+        }
+    }
+}
+
+
+function updateAfkTimers(message, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (containerId === 'yourPlayer') {
+        const timerElement = container.getElementsByClassName(`afkTimer`)[0];
+        if (timerElement && timerElement.innerHTML.trim() !== '') {
+            timerElement.innerHTML = `You have got ${message} seconds left`;
+        }
+    } else if (containerId === 'players') {
+        // Check all player divs within 'players' for attacking timer
+        const playerDivs = container.getElementsByClassName('player');
+        for (let i = 0; i < playerDivs.length; i++) {
+            const playerDiv = playerDivs[i];
+            const timerElement = playerDiv.getElementsByClassName(`afkTimer`)[0];
+            if (timerElement && timerElement.innerHTML.trim() !== '') {
+                timerElement.innerHTML = `You have got ${message} seconds left`;
             }
         }
     }

@@ -9,6 +9,8 @@ namespace Fool.Core.Services
     public class TableService : ITableService
     {
         private readonly INotificationService _notificationService;
+        private const int afkTime = 200;
+        private const int actionTime = 20;
         public Dictionary<Guid, Table> TablesWithGames { get; private set; }
         public TableService(INotificationService notificationService)
         {
@@ -97,7 +99,8 @@ namespace Fool.Core.Services
             //If player is already siting behind the table then return the table status
             // otherwise return all tables with players
             var table = FindTableWhereUserIsPlaying(playerSecret);
-            var player = table == null ? null : table.PlayersAtTheTable.FirstOrDefault(p => p.SecretKey.Equals(playerSecret))?.Player;
+            var playerAtTheTable = table == null ? null : table.PlayersAtTheTable.FirstOrDefault(p => p.SecretKey.Equals(playerSecret));
+            var player = playerAtTheTable == null ? null : playerAtTheTable.Player;
 
             if (table == null && player == null)
             {
@@ -116,40 +119,77 @@ namespace Fool.Core.Services
             }
             else
             {
-                return new GetStatusModel
-                {
-                    Table = new GetStatusModel.TableModel
+                var statusModel = new GetStatusModel();
+                statusModel.Tables = null;
+                statusModel.Table = new GetStatusModel.TableModel();
+                statusModel.Table.Id = table!.Id;
+                statusModel.Table.MyIndex = table.Game.Players.IndexOf(player!);
+                statusModel.Table.DefenderIndex = table.Game.Players.IndexOf(table.Game.DefendingPlayer!);
+                statusModel.Table.FoolPlayerIndex = table.Game.FoolPlayer != null
+                                                                          ? table.Game.Players.IndexOf(table.Game.FoolPlayer)
+                                                                          : null;
+
+                statusModel.Table.DoIWishToFinishTheRound = player!.WantsToFinishRound;
+                statusModel.Table.PlayerHand = player.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray();
+                statusModel.Table.DeckCardsCount = table.Game.Deck.CardsCount;
+                statusModel.Table.Trump = table.Game.Deck.TrumpCard != null
+                                                                    ? new GetStatusModel.CardModel(table.Game.Deck.TrumpCard)
+                                                                    : null;
+
+                statusModel.Table.CardsOnTheTable = table.Game.CardsOnTheTable.Select(c => new GetStatusModel.TableCardModel(c)).ToArray();
+                statusModel.Table.Status = table.Game.GameStatus == null
+                                                                  ? null
+                                                                  : table.Game.GameStatus.ToString();
+
+                statusModel.Table.AttackingSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.AttackingPlayer)?.SecretKey;
+
+                statusModel.Table.OwnerSecretKey = table.Owner != null
+                                                                ? table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Owner)?.SecretKey
+                                                                : null;
+
+                statusModel.Table.DefenderSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.DefendingPlayer)?.SecretKey;
+
+                statusModel.Table.FoolSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.FoolPlayer)?.SecretKey;
+
+                statusModel.Table.RoundIsEnding = table.RoundWasStoppedAt != null
+                                                                           ? true
+                                                                           : false;
+
+                bool? isRoundEnding = table.RoundWasStoppedAt != null;
+                bool isPlayerActive = playerAtTheTable?.WasLastActiveAt != null;
+
+                // Set the AFK timer flag for the table based on conditions
+                statusModel.Table.isAfkTimeOn = isRoundEnding == false && isPlayerActive;
+
+                // Populate Players array
+                statusModel.Table.Players = table.Game.Players
+                    .Where(p => p != player)
+                    .Select((c, i) => new GetStatusModel.PlayerModel
                     {
-                        Id = table!.Id,
-                        MyIndex = table.Game.Players.IndexOf(player!),
-                        DefenderIndex = table.Game.Players.IndexOf(table.Game.DefendingPlayer!),
-                        FoolPlayerIndex = table.Game.FoolPlayer != null ? table.Game.Players.IndexOf(table.Game.FoolPlayer)
-                                                                        : null,
-                        DoIWishToFinishTheRound = player!.WantsToFinishRound,
-                        PlayerHand = player.Hand.Select(c => new GetStatusModel.CardModel(c)).ToArray(),
-                        DeckCardsCount = table.Game.Deck.CardsCount,
-                        Trump = table.Game.Deck.TrumpCard != null
-                                                                ? new GetStatusModel.CardModel(table.Game.Deck.TrumpCard)
-                                                                : null,
-                        CardsOnTheTable = table.Game.CardsOnTheTable.Select(c => new GetStatusModel.TableCardModel(c)).ToArray(),
-                        Players = table.Game.Players.Where(p => p != player)
-                                                          .Select((c, i) => new GetStatusModel.PlayerModel { Index = i, Name = c.Name, CardsCount = c.Hand.Count, WantsToFinishRound = c.WantsToFinishRound })
-                                                          .ToArray(),
-                        Status = table.Game.GameStatus == null
-                                                             ? null
-                                                             : table.Game.GameStatus.ToString(),
-                        AttackingSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.AttackingPlayer)?.SecretKey,
-                        OwnerSecretKey = table.Owner != null
-                                                     ? table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Owner)?.SecretKey
-                                                     : null,
-                        DefenderSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.DefendingPlayer)?.SecretKey,
-                        FoolSecretKey = table.PlayersAtTheTable.FirstOrDefault(p => p.Player == table.Game.FoolPlayer)?.SecretKey,
-                        RoundIsEnding = table.RoundWasStoppedAt != null
-                                                                      ? true
-                                                                      : false,
-                    },
-                    Tables = null
-                };
+                        Index = i,
+                        Name = c.Name,
+                        CardsCount = c.Hand.Count,
+                        WantsToFinishRound = c.WantsToFinishRound,
+                        isAfkTimerOn = false
+                    })
+                    .ToArray();
+
+                // Update isAfkTimerOn for each player if Round is not ending
+                if (isRoundEnding == false)
+                {
+                    foreach (var playerModel in statusModel.Table.Players)
+                    {
+                        var playerAtTheTableModel = table.PlayersAtTheTable
+                            .FirstOrDefault(s => s.Player.Name == playerModel.Name);
+
+                        if (playerAtTheTableModel != null)
+                        {
+                            playerModel.isAfkTimerOn = playerAtTheTableModel.WasLastActiveAt != null;
+                        }
+                    }
+                }
+
+                return statusModel;
             }
         }
 
@@ -183,16 +223,29 @@ namespace Fool.Core.Services
 
             if (table.RoundWasStoppedAt != null)
             {
-                // Without this check, surrendering timer would be reset
+                // Stop Finishing of the round if somebody decided to add attacking cards
+                // Not for Surrender
                 if (IfAnyAttackingPlayerDecidedToFinishTheRound(table))
                 {
                     table.RoundWasStoppedAt = null;
                     table.Game.RefreshTheRound();
-                    table.SetTimerForDefendingPlayersAction();
+                    if (isGameInProgress(table))
+                    {
+                        table.SetTimerForDefendingPlayersAction();
+                    }
                 }
             }
-
-            table.Game.RefreshTheRound();
+            else
+            {
+                if (isGameInProgress(table))
+                {
+                    table.SetTimerForDefendingPlayersAction();
+                }
+                else
+                {
+                    table.ClearAllTimers();
+                }
+            }
         }
 
 
@@ -208,7 +261,18 @@ namespace Fool.Core.Services
             {
                 playerAtTheTable.Player.Defend(defendingCardIndex, attackingCardIndex);
             }
-            table.SetTimerForAttackingPlayersAction();
+
+            if (AreAllCardsOnTheTableWereDefended(table))
+            {
+                if (isGameInProgress(table))
+                {
+                    table.SetTimerForAttackingPlayersAction();
+                }
+                else
+                {
+                    table.ClearAllTimers();
+                }
+            }
         }
 
 
@@ -259,9 +323,25 @@ namespace Fool.Core.Services
             {
                 throw new FoolExceptions("The round is already in the process of stopping!");
             }
-            playerAtTheTable.Player.WantsToFinishTheRound();
-            table.ClearAllTimers();
-            table.RoundWasStoppedAt = DateTime.UtcNow;
+
+
+            // if 2 players are playing, then the round is finished
+            if (table.PlayersAtTheTable.Count.Equals(2))
+            {
+                table.RoundWasStoppedAt = null;
+                table.Game.FinishTheRound();
+                table.ClearAllTimers();
+                if (isGameInProgress(table))
+                {
+                    table.SetTimerForAttackingPlayersAction();
+                }
+            }
+            else
+            {
+                playerAtTheTable.Player.WantsToFinishTheRound();
+                table.ClearAllTimers();
+                table.RoundWasStoppedAt = DateTime.UtcNow;
+            }
         }
 
         public void CheckIfRoundWasStopped()
@@ -277,17 +357,26 @@ namespace Fool.Core.Services
                     table.Game.FinishTheRound();
 
                     _notificationService.SendRoundFinishedAsync();
+
+                    // If game isnt over yet
+                    if (isGameInProgress(table))
+                    {
+                        table.SetTimerForAttackingPlayersAction();
+                    }
                 }
                 else
                 {
-                    var amountOfTimeRemaining = (DateTime.UtcNow - table.RoundWasStoppedAt.Value).TotalSeconds;
+                    var totalRoundTime = 20;
+                    var elapsedTime = (DateTime.UtcNow - table.RoundWasStoppedAt.Value).TotalSeconds;
+                    var timeRemaining = totalRoundTime - elapsedTime;
+
                     if (IfAnyAttackingPlayerDecidedToFinishTheRound(table))
                     {
-                        _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining), false);
+                        _notificationService.SendTimePassedAsync(Math.Round(timeRemaining), false);
                     }
                     else
                     {
-                        _notificationService.SendTimePassedAsync(Math.Round(amountOfTimeRemaining), true);
+                        _notificationService.SendTimePassedAsync(Math.Round(timeRemaining), true);
                     }
                 }
             }
@@ -301,12 +390,26 @@ namespace Fool.Core.Services
                 {
                     foreach (var tablePlayer in table.PlayersAtTheTable)
                     {
-                        if (tablePlayer.WasLastActiveAt != null && isThinkingTimeUp(tablePlayer))
+                        if (tablePlayer.WasLastActiveAt != null)
                         {
-                            var message = LeaveTable(table.Id, tablePlayer.SecretKey);
-                            tablePlayer.WasLastActiveAt = null;
-                            _notificationService.SendAfkPlayerWasKickedAsync(message);
-                            break;
+                            if (isThinkingTimeUp(tablePlayer))
+                            {
+                                var message = LeaveTable(table.Id, tablePlayer.SecretKey);
+                                tablePlayer.WasLastActiveAt = null;
+                                _notificationService.SendAfkPlayerWasKickedAsync(message);
+                                if (isGameInProgress(table))
+                                {
+                                    table.SetTimerForAttackingPlayersAction();
+                                }
+                            }
+                            else
+                            {
+                                var totalAfkTime = 200; // Example: total AFK time allowed in seconds
+                                var elapsedTime = (DateTime.UtcNow - tablePlayer.WasLastActiveAt.Value).TotalSeconds;
+                                var timeRemaining = totalAfkTime - elapsedTime;
+
+                                _notificationService.SendAfkPlayerTimeLeftAsync(Math.Round(timeRemaining));
+                            }
                         }
                     }
                 }
@@ -329,6 +432,11 @@ namespace Fool.Core.Services
         }
 
 
+
+        private bool AreAllCardsOnTheTableWereDefended(Table table)
+        {
+            return table.Game.CardsOnTheTable.All(c => c.DefendingCard != null);
+        }
 
         private bool CheckIfPlayerIsAlreadyPlayingOnAnotherTable(string playerSecret)
         {
@@ -354,14 +462,19 @@ namespace Fool.Core.Services
 
         private bool IsTimeUp(Table table)
         {
-            var shouldFinishAt = table.RoundWasStoppedAt.Value.AddSeconds(20);
+            var shouldFinishAt = table.RoundWasStoppedAt.Value.AddSeconds(actionTime);
             return DateTime.UtcNow >= shouldFinishAt;
         }
 
         private bool isThinkingTimeUp(PlayerAtTheTable player)
         {
-            var shouldFinishAt = player.WasLastActiveAt!.Value.AddSeconds(60);
+            var shouldFinishAt = player.WasLastActiveAt!.Value.AddSeconds(afkTime);
             return DateTime.UtcNow >= shouldFinishAt;
+        }
+
+        private bool isGameInProgress(Table table)
+        {
+            return table.Game.GameStatus == GameStatus.InProgress;
         }
 
     }

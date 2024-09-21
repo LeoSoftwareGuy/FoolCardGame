@@ -103,7 +103,6 @@ namespace Fool.Core.Models
             var cardFromTheTable = _game.CardsOnTheTable[attackingCardId];
 
             _game.Defend(this, defendingCard, cardFromTheTable.AttackingCard);
-            Hand.Remove(defendingCard);
         }
 
 

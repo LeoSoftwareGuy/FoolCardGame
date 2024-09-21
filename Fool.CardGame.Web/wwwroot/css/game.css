@@ -47,7 +47,7 @@
 
 #yourPlayer {
     margin-top: 1rem;
-    width: 100%;
+    width: 34%;
     display: flex;
     align-content: center;
     justify-content: center;
@@ -280,30 +280,44 @@
     border: 2px solid blue;
 }
 
-.player__timer__defending:not(:empty),
-.player__timer__attacking:not(:empty) {
-    padding: .2rem .4rem;
-    display: inline-block;
-    position: absolute;
-    top: 0;
-    font-size: 0.6rem;
-    font-weight: bold;
-    border: 1px solid white;
-    color: white;
-    text-align: center;
-    border-radius: 24rem;
+
+
+.afkTimer {
+    padding-top: 0.5rem;
+    width: 8rem;
+    height: 2rem;
+    border-radius: 3rem;
     box-shadow: 0 0 40px rgba(0, 255, 0, 0.7);
+    background-color: red;
+    color: white;
+    font-size: 0.5rem;
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: center;
 }
+
+.afkTimer:empty{
+    display: none;
+}
+
 
 .player__timer__defending,
 .player__timer__attacking {
-    right: 362px;
+    padding-top: 0.5rem;
+    width: 8rem;
+    height: 2rem;
+    border-radius: 3rem;
+    box-shadow: 0 0 40px rgba(0, 255, 0, 0.7);
+    font-size: 0.5rem;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    white-space: nowrap;
 }
 
     .player__timer__defending:empty,
-    .player__timer__attacking:empty {
-        border: none;
-        padding: 0;
+    .player__timer__attacking:empty{
+       display:none
     }
 
 .background {

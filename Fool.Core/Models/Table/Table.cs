@@ -16,6 +16,7 @@
         public void SetTimerForAttackingPlayersAction()
         {
             PlayersAtTheTable.FirstOrDefault(x=>x.Player == Game.AttackingPlayer)!.WasLastActiveAt = DateTime.UtcNow;
+            PlayersAtTheTable.FirstOrDefault(x => x.Player == Game.DefendingPlayer)!.WasLastActiveAt = null; // not waiting for the defending player anymore
         }
         public void SetTimerForDefendingPlayersAction()
         {

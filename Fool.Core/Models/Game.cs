@@ -255,6 +255,9 @@ namespace Fool.Core.Models
             }
 
             card.Defend(defendingCard);
+            player.Hand.Remove(defendingCard); // Remove card since it is now on the table
+
+            CheckIfAnybodyHasWon();
         }
 
 

@@ -268,6 +268,11 @@ function drawYourself(status) {
     yourPlayerDiv.getElementsByClassName('player__name')[0].innerHTML = user.name;
     yourPlayerDiv.getElementsByClassName('player__name')[0].title = user.name;
 
+    // How much time you have got
+    if (status.table.isAfkTimeOn) {
+        yourPlayerDiv.getElementsByClassName('afkTimer')[0].innerHTML = "Hm";
+    }
+
     let doesanyPlayerWantToFinishTheRound = doesAnyPlayerWantToFinishTheRound();
     //If you are surrendring
     if (status.table.roundIsEnding && status.table.defenderSecretKey == user.secret && !doesanyPlayerWantToFinishTheRound) {
@@ -398,6 +403,11 @@ function drawPlayersAndTheirHands(status) {
         let gameIndex = playerIndexes[i].gameIndex;
         let player = status.table.players[playerIndex];
         let playerDiv = originalPlayerDiv.cloneNode(true);
+
+        // How much time player has got
+        if (player.isAfkTimerOn) {
+            playerDiv.getElementsByClassName('afkTimer')[0].innerHTML = 'Hm!!'
+        }
 
         //If player is surrendering(only defending player can do that))
         if (gameIndex == status.table.defenderIndex && status.table.roundIsEnding && !doesAnyPlayerWantToFinishTheRound()) {

@@ -29,6 +29,11 @@ namespace Fool.CardGame.Web.Services
             return _hubContext.Clients.All.SendAsync("AfkPlayerIsOut", message);
         }
 
+        public Task SendAfkPlayerTimeLeftAsync(double amountOfTimeRemaining)
+        {
+            return _hubContext.Clients.All.SendAsync("AfkPlayerIsCounting", amountOfTimeRemaining.ToString());
+        }
+
         public Task SendTimePassedAsync(double amountOfTimeRemaining, bool isSurrender)
         {
             return _hubContext.Clients.All.SendAsync("TimePassed", amountOfTimeRemaining.ToString(), isSurrender);
