@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ZYuOJ+j0plY=",
+  "dgSpecHash": "ONTQ0w6FCM0=",
   "success": true,
   "projectFilePath": "C:\\Users\\LeonidLobanov\\Desktop\\Personla\\Personal\\Fool.Core\\Fool.Core\\Fool.Core.csproj",
   "expectedPackageFiles": [
@@ -31,6 +31,7 @@
     "C:\\Users\\LeonidLobanov\\.nuget\\packages\\microsoft.extensions.options\\8.0.0\\microsoft.extensions.options.8.0.0.nupkg.sha512",
     "C:\\Users\\LeonidLobanov\\.nuget\\packages\\microsoft.extensions.options.configurationextensions\\8.0.0\\microsoft.extensions.options.configurationextensions.8.0.0.nupkg.sha512",
     "C:\\Users\\LeonidLobanov\\.nuget\\packages\\microsoft.extensions.primitives\\8.0.0\\microsoft.extensions.primitives.8.0.0.nupkg.sha512",
+    "C:\\Users\\LeonidLobanov\\.nuget\\packages\\nlog\\5.3.4\\nlog.5.3.4.nupkg.sha512",
     "C:\\Users\\LeonidLobanov\\.nuget\\packages\\system.diagnostics.diagnosticsource\\8.0.0\\system.diagnostics.diagnosticsource.8.0.0.nupkg.sha512",
     "C:\\Users\\LeonidLobanov\\.nuget\\packages\\system.diagnostics.eventlog\\8.0.0\\system.diagnostics.eventlog.8.0.0.nupkg.sha512",
     "C:\\Users\\LeonidLobanov\\.nuget\\packages\\system.text.encodings.web\\8.0.0\\system.text.encodings.web.8.0.0.nupkg.sha512",

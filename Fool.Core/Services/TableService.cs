@@ -3,11 +3,14 @@ using Fool.Core.Exceptions;
 using Fool.Core.Models;
 using Fool.Core.Models.Table;
 using Fool.Core.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using NLog;
 
 namespace Fool.Core.Services
 {
     public class TableService : ITableService
     {
+        private ILogger<TableService> logger;
         private readonly INotificationService _notificationService;
         private const int afkTime = 200;
         private const int actionTime = 20;
@@ -23,11 +26,15 @@ namespace Fool.Core.Services
             var game = new Game();
             var table = new Table { Id = Guid.NewGuid(), Game = game, PlayersAtTheTable = new List<PlayerAtTheTable> { } };
             TablesWithGames.Add(table.Id, table);
+
+            WriteLog(table.Id, null, "CreateTable");
             return table.Id;
         }
 
         public string LeaveTable(Guid tableId, string playerSecret)
         {
+            WriteLog(tableId, playerSecret, "LeaveTable");
+
             var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
             var alertMessage = $"Fucking player:{playerAtTheTable.Player.Name} has left the table.";
 
@@ -56,6 +63,8 @@ namespace Fool.Core.Services
 
         public void SitToTheTable(string playerSecret, string playerName, Guid tableId)
         {
+            WriteLog(tableId, playerSecret, "SitToTheTable");
+
             // player who sit first is the main player
             // when function to quit the game will be added will come back to this, as we will need to make new main player
             // when all players leave the table, table is deleted
@@ -83,6 +92,7 @@ namespace Fool.Core.Services
 
         public void StartGame(Guid tableId, string playerSecret)
         {
+            WriteLog(tableId, playerSecret, "StartGame");
             var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
             if (table.Owner != playerAtTheTable.Player)
@@ -196,6 +206,7 @@ namespace Fool.Core.Services
 
         public void Attack(Guid tableId, string playerSecret, int[] cardIds)
         {
+            WriteLog(tableId, playerSecret, "Attack");
             if (cardIds.Length == 0)
             {
                 throw new FoolExceptions("You can't attack without providing card IDs");
@@ -251,6 +262,7 @@ namespace Fool.Core.Services
 
         public void Defend(Guid tableId, string playerSecret, int defendingCardIndex, int attackingCardIndex)
         {
+            WriteLog(tableId, playerSecret, "Defend");
             var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
             if (table.RoundWasStoppedAt != null)
@@ -278,6 +290,7 @@ namespace Fool.Core.Services
 
         public void SurrenderCurrentRound(Guid tableId, string playerSecret)
         {
+            WriteLog(tableId, playerSecret, "SurrenderCurrentRound");
             var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
             if (table.Game.FoolPlayer != null)
@@ -302,6 +315,7 @@ namespace Fool.Core.Services
 
         public void EndCurrentRound(Guid tableId, string playerSecret)
         {
+            WriteLog(tableId, playerSecret, "EndCurrentRound");
             var (table, playerAtTheTable) = GetTableAndPlayer(tableId, playerSecret);
 
             if (!table.Game.CardsOnTheTable.All(c => c.DefendingCard != null))
@@ -477,5 +491,15 @@ namespace Fool.Core.Services
             return table.Game.GameStatus == GameStatus.InProgress;
         }
 
+
+
+        // Logger 
+        private void WriteLog(Guid tableId, string? playerSecret, string value)
+        {
+            var logger = LogManager.GetCurrentClassLogger()
+                .WithProperty("TableId", tableId)
+                .WithProperty("PlayerId", playerSecret);
+            logger.Info(value);
+        }
     }
 }

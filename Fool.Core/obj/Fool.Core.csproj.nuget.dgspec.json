@@ -54,6 +54,10 @@
             "Microsoft.Extensions.Hosting": {
               "target": "Package",
               "version": "[8.0.0, )"
+            },
+            "NLog": {
+              "target": "Package",
+              "version": "[5.3.4, )"
             }
           },
           "imports": [
